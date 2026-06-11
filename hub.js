@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupSearch();
     setupThemeSelector();
     setupDetailModal();
+    // Clear any browser autofill pollution in search input
+    const filterInput = document.getElementById('hub-filter');
+    if (filterInput) { filterInput.value = ''; }
     await renderGrid();
 
     document.getElementById('btn-theme-toggle-hub').onclick = () => toggleTheme();
@@ -78,11 +81,14 @@ function setupAuth() {
         e.stopPropagation();
         openAuthModal('register');
     };
-    document.getElementById('btn-create-song').onclick = (e) => {
+    const createSongHandler = (e) => {
         e.stopPropagation();
         if (Auth.isLoggedIn()) window.location.href = 'index.html';
         else openAuthModal('login');
     };
+    document.getElementById('btn-create-song').onclick = createSongHandler;
+    const heroBtn = document.getElementById('btn-create-song-hero');
+    if (heroBtn) heroBtn.onclick = createSongHandler;
     document.getElementById('btn-close-auth').onclick = () => closeAuthModal();
     document.getElementById('auth-modal').onclick = (e) => {
         if (e.target === e.currentTarget) closeAuthModal();
@@ -200,7 +206,7 @@ async function _loadSongsFromSupabase() {
     if (!sb) return null;
     try {
         const { data, error } = await sb.from('songs')
-            .select('*, profiles(username)')
+            .select('*')
             .order('updated_at', { ascending: false });
         if (!error && data) return data;
     } catch (e) {}
@@ -341,7 +347,7 @@ async function renderGrid() {
             <div class="hub-card-head">
                 <div class="hub-card-title">${song.title || 'Sin título'}</div>
                 <div class="hub-card-artist">${song.artist || 'Artista desconocido'}</div>
-                ${song.profiles?.username ? `<div class="hub-card-author" style="font-size:0.75rem; color:var(--text-secondary); opacity:0.8; margin-top:0.25rem;"><i class="fa-solid fa-circle-user" style="font-size:0.8rem; margin-right:3px;"></i>${song.profiles.username}</div>` : ''}
+                ${song.author ? `<div class="hub-card-author" style="font-size:0.75rem; color:var(--text-secondary); opacity:0.8; margin-top:0.25rem;"><i class="fa-solid fa-circle-user" style="font-size:0.8rem; margin-right:3px;"></i>${song.author}</div>` : ''}
             </div>
             <div class="hub-card-tags">
                 ${song.genre ? `<span class="library-card-tag">${song.genre}</span>` : ''}

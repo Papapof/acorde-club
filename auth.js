@@ -44,6 +44,10 @@ const Auth = {
                 });
                 if (error) return { ok: false, error: error.message };
                 // Inicia sesión automáticamente después del registro
+                const { error: loginError } = await sb.auth.signInWithPassword({
+                    email: username.toLowerCase().trim() + '@acordeclub.app',
+                    password: password
+                });
                 return { ok: true, data };
             } catch (e) {
                 return { ok: false, error: 'Error de conexión con el servidor' };

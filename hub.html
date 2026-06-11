@@ -55,10 +55,21 @@
                 </div>
             </header>
 
+            <!-- ═══ HERO CTA ═══ -->
+            <div class="hub-hero">
+                <div class="hub-hero-text">
+                    <h2><i class="fa-solid fa-pen-fancy"></i> ¿Listo para crear tu próxima canción?</h2>
+                    <p>Compón acordes, elige ritmos y comparte tu música con la comunidad.</p>
+                </div>
+                <button id="btn-create-song-hero" class="btn btn-create-hero">
+                    <i class="fa-solid fa-circle-plus"></i> Crear Canción
+                </button>
+            </div>
+
             <!-- ═══ SEARCH ═══ -->
             <div class="hub-search">
                 <i class="fa-solid fa-search"></i>
-                <input type="text" id="hub-filter" placeholder="Busca canciones por título, artista o género..." class="form-control">
+                <input type="text" id="hub-filter" placeholder="Busca canciones por título, artista o género..." class="form-control" autocomplete="off" name="hub-search">
                 <span id="hub-song-count" class="hub-count">0 canciones</span>
             </div>
 
@@ -89,11 +100,11 @@
                 <div id="auth-error" class="auth-error hidden"></div>
                 <div class="metadata-field" style="margin-bottom:0.8rem;">
                     <i class="fa-solid fa-user"></i>
-                    <input type="text" id="auth-username" placeholder="Nombre de usuario" class="form-control">
+                    <input type="text" id="auth-username" placeholder="Nombre de usuario" class="form-control" autocomplete="off" name="auth-username">
                 </div>
                 <div class="metadata-field" style="margin-bottom:0.8rem;">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="auth-password" placeholder="Contraseña" class="form-control">
+                    <input type="password" id="auth-password" placeholder="Contraseña" class="form-control" autocomplete="new-password" name="auth-password">
                 </div>
                 <button id="btn-auth-submit" class="btn btn-primary" style="width:100%;justify-content:center;">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i> <span id="auth-submit-text">Entrar</span>

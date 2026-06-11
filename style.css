@@ -1327,6 +1327,92 @@ body.theme-playa .btn-primary:hover {
     box-shadow: 0 12px 25px rgba(26, 158, 181, 0.4);
 }
 
+/* ─── Hub Hero CTA ─── */
+.hub-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem 1.2rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, rgba(128, 128, 128, 0.08), rgba(255, 123, 0, 0.06));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.hub-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(255, 123, 0, 0.06), transparent 60%);
+    pointer-events: none;
+}
+
+.hub-hero-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.hub-hero-text h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hub-hero-text p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn-create-hero {
+    background: linear-gradient(135deg, #ff7b00, #e06600);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 1.8rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: all var(--transition);
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(255, 123, 0, 0.3);
+    flex-shrink: 0;
+}
+
+.btn-create-hero:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(255, 123, 0, 0.45);
+}
+
+.btn-create-hero:active {
+    transform: translateY(0) scale(0.98);
+}
+
+@media (max-width: 600px) {
+    .hub-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.2rem;
+    }
+    .hub-hero-text h2 {
+        justify-content: center;
+    }
+    .btn-create-hero {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* ─── Hub Search ─── */
 .hub-search {
     display: flex;

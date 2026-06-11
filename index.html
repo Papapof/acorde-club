@@ -33,12 +33,12 @@
             </div>
             <div id="library-search" class="library-search">
                 <i class="fa-solid fa-search"></i>
-                <input type="text" id="library-filter" placeholder="Busca por título o artista..." class="form-control">
+                <input type="text" id="library-filter" placeholder="Busca por título o artista..." class="form-control" autocomplete="off">
             </div>
             <div id="library-grid" class="library-grid">
                 <div class="empty-state">
                     <i class="fa-solid fa-music"></i>
-                    <p>No hay canciones guardadas aún. ¡Compone algo y guárdala!</p>
+                    <p>No hay canciones guardadas aún. ¡Compone algo y súbela!</p>
                 </div>
             </div>
             <input type="file" id="import-file-input" accept=".json" style="display:none">
@@ -145,7 +145,7 @@
                         <input type="number" id="bpm" value="90" min="40" max="240" title="BPM">
                         <span>BPM</span>
                     </div>
-                    <button id="btn-save" class="btn btn-secondary" title="Guardar canción">
+                    <button id="btn-save" class="btn btn-secondary" title="Subir canción">
                         <i class="fa-solid fa-floppy-disk"></i>
                     </button>
                     <button id="btn-export-json" class="btn btn-secondary" title="Exportar como JSON">

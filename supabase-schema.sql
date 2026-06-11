@@ -30,9 +30,10 @@ CREATE TABLE IF NOT EXISTS likes (
     UNIQUE(song_id, user_id)
 );
 
--- ═══ MIGRACIÓN: agregar columnas de modo de ejecución (si no existen) ═══
+-- ═══ MIGRACIÓN: agregar columnas (si no existen) ═══
 ALTER TABLE songs ADD COLUMN IF NOT EXISTS play_mode TEXT NOT NULL DEFAULT 'strum';
 ALTER TABLE songs ADD COLUMN IF NOT EXISTS picking_pattern TEXT NOT NULL DEFAULT 'arpegio_up';
+ALTER TABLE songs ADD COLUMN IF NOT EXISTS author TEXT NOT NULL DEFAULT '';
 
 -- ═══ ÍNDICES ═══
 CREATE INDEX IF NOT EXISTS idx_songs_user_id ON songs(user_id);

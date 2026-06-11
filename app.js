@@ -975,6 +975,7 @@ class ChordComposer {
     getSongData() {
         return {
             id: this.currentSongId || generateId(),
+            author: Auth.getUsername() || '',
             title: document.getElementById('song-title')?.value?.trim() || 'Sin título',
             artist: document.getElementById('song-artist')?.value?.trim() || '',
             genre: document.getElementById('song-genre')?.value || '',
@@ -1005,6 +1006,7 @@ class ChordComposer {
             const existing = this.savedSongs.find(s => s.id === data.id);
             const supabaseRecord = {
                 title: data.title,
+                author: data.author,
                 artist: data.artist,
                 genre: data.genre,
                 key: data.key,
@@ -1051,7 +1053,7 @@ class ChordComposer {
         this._persistLibrary();
         this._updateLibraryBadge();
         this._markClean();
-        this._feedback('¡Canción guardada!');
+        this._feedback('¡Canción subida!');
     }
 
     loadSong(id) {
@@ -1144,6 +1146,7 @@ class ChordComposer {
             if (!error && data) {
                 return data.map(s => ({
                     id: s.id,
+                    author: s.author || '',
                     title: s.title,
                     artist: s.artist,
                     genre: s.genre,
