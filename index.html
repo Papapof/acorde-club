@@ -48,13 +48,18 @@
     <div class="app-wrapper">
         <div class="glass-panel main-panel">
 
-            <!-- ═══ THEME SELECTOR ═══ -->
+            <!-- ═══ THEME SELECTOR + LIBRARY ═══ -->
             <div class="theme-selector" id="theme-selector">
-                <span class="theme-label"><i class="fa-solid fa-palette"></i> TEMAS</span>
-                <button class="theme-btn active" data-theme="naturaleza">Naturaleza</button>
-                <button class="theme-btn" data-theme="bliss">Bliss</button>
-                <button class="theme-btn" data-theme="oceano">Océano</button>
-                <button class="theme-btn" data-theme="playa">Playa</button>
+                <button id="btn-library" class="btn btn-sm btn-secondary" title="Abrir biblioteca">
+                    <i class="fa-solid fa-book"></i> <span class="btn-badge" id="library-count">0</span>
+                </button>
+                <div class="theme-center">
+                    <span class="theme-label"><i class="fa-solid fa-palette"></i> TEMAS</span>
+                    <button class="theme-btn active" data-theme="naturaleza">Naturaleza</button>
+                    <button class="theme-btn" data-theme="bliss">Bliss</button>
+                    <button class="theme-btn" data-theme="oceano">Océano</button>
+                    <button class="theme-btn" data-theme="playa">Playa</button>
+                </div>
             </div>
 
             <!-- ═══ HEADER ═══ -->
@@ -143,9 +148,6 @@
                     <button id="btn-save" class="btn btn-secondary" title="Guardar canción">
                         <i class="fa-solid fa-floppy-disk"></i>
                     </button>
-                    <button id="btn-library" class="btn btn-secondary" title="Abrir biblioteca">
-                        <i class="fa-solid fa-book"></i> <span class="btn-badge" id="library-count">0</span>
-                    </button>
                     <button id="btn-export-json" class="btn btn-secondary" title="Exportar como JSON">
                         <i class="fa-solid fa-file-export"></i>
                     </button>
@@ -211,6 +213,12 @@
                 <div class="strum-section">
                     <h4 class="strum-title"><i class="fa-solid fa-guitar"></i> Patrón de Rasgueo</h4>
                     <div class="strum-btn-grid" id="strum-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div class="strum-section">
+                    <h4 class="strum-title"><i class="fa-solid fa-hand-peace"></i> Estilo de Punteo</h4>
+                    <div class="strum-btn-grid" id="picking-grid">
                         <!-- Populated by JS -->
                     </div>
                 </div>

@@ -5,9 +5,11 @@ const THEME_KEY = 'guitar-chord-studio-theme';
 let chordDB = {};
 let audioStarted = false;
 let guitarSynth = null;
+let masterGainHub = null;
 let currentDetailSongId = null;
 let isDetailPlaying = false;
 let detailPlaybackTimer = null;
+let playbackSessionHub = 0;
 
 // ─── Init ───
 document.addEventListener('DOMContentLoaded', async () => {
@@ -198,7 +200,7 @@ async function _loadSongsFromSupabase() {
     if (!sb) return null;
     try {
         const { data, error } = await sb.from('songs')
-            .select('*')
+            .select('*, profiles(username)')
             .order('updated_at', { ascending: false });
         if (!error && data) return data;
     } catch (e) {}
@@ -339,6 +341,7 @@ async function renderGrid() {
             <div class="hub-card-head">
                 <div class="hub-card-title">${song.title || 'Sin título'}</div>
                 <div class="hub-card-artist">${song.artist || 'Artista desconocido'}</div>
+                ${song.profiles?.username ? `<div class="hub-card-author" style="font-size:0.75rem; color:var(--text-secondary); opacity:0.8; margin-top:0.25rem;"><i class="fa-solid fa-circle-user" style="font-size:0.8rem; margin-right:3px;"></i>${song.profiles.username}</div>` : ''}
             </div>
             <div class="hub-card-tags">
                 ${song.genre ? `<span class="library-card-tag">${song.genre}</span>` : ''}
@@ -384,6 +387,28 @@ async function renderGrid() {
     });
 }
 
+function muteAudioHub() {
+    if (masterGainHub) {
+        try {
+            const now = Tone.getContext().rawContext.currentTime;
+            masterGainHub.gain.cancelScheduledValues(now);
+            masterGainHub.gain.setValueAtTime(masterGainHub.gain.value, now);
+            masterGainHub.gain.linearRampToValueAtTime(0, now + 0.005);
+        } catch(e) {}
+    }
+}
+
+function unmuteAudioHub() {
+    if (masterGainHub) {
+        try {
+            const now = Tone.getContext().rawContext.currentTime;
+            masterGainHub.gain.cancelScheduledValues(now);
+            masterGainHub.gain.setValueAtTime(masterGainHub.gain.value, now);
+            masterGainHub.gain.linearRampToValueAtTime(1, now + 0.02);
+        } catch(e) {}
+    }
+}
+
 // ─── Playback (simple) ───
 async function initAudio() {
     if (audioStarted) return;
@@ -391,9 +416,15 @@ async function initAudio() {
     audioStarted = true;
     try {
         const ac = Tone.getContext().rawContext;
-        guitarSynth = await Soundfont.instrument(ac, 'acoustic_guitar_nylon', { soundfont: 'FluidR3_GM' });
+        guitarSynth = await Soundfont.instrument(ac, 'acoustic_guitar_nylon', { soundfont: 'FluidR3_GM', gain: 0.8 });
+        masterGainHub = ac.createGain();
+        masterGainHub.gain.value = 1;
+        masterGainHub.connect(ac.destination);
+        if (guitarSynth.disconnect) guitarSynth.disconnect();
+        if (guitarSynth.connect) guitarSynth.connect(masterGainHub);
     } catch (e) {
         guitarSynth = null;
+        masterGainHub = null;
     }
 }
 
@@ -409,11 +440,13 @@ function playSong(song) {
         b.innerHTML = '<i class="fa-solid fa-play"></i>';
     });
     if (detailPlaybackTimer) { clearInterval(detailPlaybackTimer); detailPlaybackTimer = null; }
-    if (isDetailPlaying) { isDetailPlaying = false; Tone.Transport.stop(); Tone.Transport.cancel(); }
+    if (isDetailPlaying) { isDetailPlaying = false; Tone.Transport.stop(); Tone.Transport.cancel(); muteAudioHub(); }
 
     if (wasPlaying) return;
 
     initAudio().then(() => {
+        playbackSessionHub++;
+        unmuteAudioHub();
         btn.dataset.playing = 'true';
         btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
 
@@ -424,14 +457,18 @@ function playSong(song) {
         Tone.Transport.cancel();
 
         let step = 0;
-        const repeatId = Tone.Transport.scheduleRepeat((time) => {
+        const session = playbackSessionHub;
+        Tone.Transport.scheduleRepeat((time) => {
+            if (session !== playbackSessionHub) return;
             const chord = song.chords[step];
             if (!chord) return;
             const notes = chord.midiNotes?.filter(n => n > 0);
             if (notes?.length) {
                 if (guitarSynth) {
                     notes.forEach((midi, i) => {
-                        guitarSynth.play(Tone.Frequency(midi, 'midi').toNote(), time + i * 0.032, { duration: 1.5, gain: 0.6 });
+                        const vel = 0.4 + Math.random() * 0.35;
+                        const drift = Math.random() * 0.008 - 0.004;
+                        guitarSynth.play(Tone.Frequency(midi, 'midi').toNote(), time + i * 0.035 + drift, { duration: 1.2 + Math.random() * 0.6, gain: Math.max(vel, 0.2) });
                     });
                 } else {
                     fallbackPlay(notes, time);
@@ -443,9 +480,10 @@ function playSong(song) {
         Tone.Transport.start('+0.1');
 
         detailPlaybackTimer = setInterval(() => {
-            if (!btn.dataset.playing) {
+            if (btn.dataset.playing !== 'true') {
                 Tone.Transport.stop();
                 Tone.Transport.cancel();
+                muteAudioHub();
                 clearInterval(detailPlaybackTimer);
             }
         }, 100);
@@ -569,6 +607,7 @@ function closeDetail() {
         isDetailPlaying = false;
         Tone.Transport.stop();
         Tone.Transport.cancel();
+        muteAudioHub();
     }
 }
 
@@ -580,12 +619,15 @@ function playDetail(song) {
         isDetailPlaying = false;
         Tone.Transport.stop();
         Tone.Transport.cancel();
+        muteAudioHub();
         if (detailPlaybackTimer) { clearInterval(detailPlaybackTimer); detailPlaybackTimer = null; }
         btn.innerHTML = '<i class="fa-solid fa-play"></i> Reproducir';
         return;
     }
 
     initAudio().then(() => {
+        playbackSessionHub++;
+        unmuteAudioHub();
         isDetailPlaying = true;
         btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener';
 
@@ -596,14 +638,18 @@ function playDetail(song) {
         Tone.Transport.cancel();
 
         let step = 0;
+        const session = playbackSessionHub;
         Tone.Transport.scheduleRepeat((time) => {
+            if (session !== playbackSessionHub || !isDetailPlaying) return;
             const chord = song.chords[step];
-            if (!chord || !isDetailPlaying) return;
+            if (!chord) return;
             const notes = chord.midiNotes?.filter(n => n > 0);
             if (notes?.length) {
                 if (guitarSynth) {
                     notes.forEach((midi, i) => {
-                        guitarSynth.play(Tone.Frequency(midi, 'midi').toNote(), time + i * 0.032, { duration: 1.5, gain: 0.6 });
+                        const vel = 0.4 + Math.random() * 0.35;
+                        const drift = Math.random() * 0.008 - 0.004;
+                        guitarSynth.play(Tone.Frequency(midi, 'midi').toNote(), time + i * 0.035 + drift, { duration: 1.2 + Math.random() * 0.6, gain: Math.max(vel, 0.2) });
                     });
                 } else {
                     fallbackPlay(notes, time);

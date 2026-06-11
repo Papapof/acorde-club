@@ -1104,13 +1104,21 @@ body.dark .library-card-tag {
 /* ─── Theme Selector ─── */
 .theme-selector {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     gap: 0.5rem;
     padding: 0 0 0.5rem;
     flex-wrap: wrap;
     margin: 0;
     border-bottom: 1px solid var(--divider);
+}
+
+.theme-center {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    justify-content: center;
 }
 
 .theme-label {

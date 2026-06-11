@@ -1,16 +1,49 @@
 // ─── Strumming Patterns ───
 const STRUM_PATTERNS = {
-    simple:  { label: 'Simple',  icon: '↓',     strums: [{ dir: 'down', beat: 0 }] },
-    dd:      { label: 'A-A',     icon: '↓↓',    strums: [{ dir: 'down', beat: 0 }, { dir: 'down', beat: 0.5 }] },
-    du:      { label: 'A-Ar',    icon: '↓↑',    strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.5 }] },
-    ddu:     { label: 'A-A-Ar',  icon: '↓↓↑',   strums: [{ dir: 'down', beat: 0 }, { dir: 'down', beat: 0.5 }, { dir: 'up', beat: 0.75 }] },
-    folk:    { label: 'Folk',    icon: '↓↓↑↑↓↑', strums: [
+    simple:  { type: 'strum', label: 'Simple',  icon: '↓',     strums: [{ dir: 'down', beat: 0 }] },
+    dd:      { type: 'strum', label: 'A-A',     icon: '↓↓',    strums: [{ dir: 'down', beat: 0 }, { dir: 'down', beat: 0.5 }] },
+    du:      { type: 'strum', label: 'A-Ar',    icon: '↓↑',    strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.5 }] },
+    ddu:     { type: 'strum', label: 'A-A-Ar',  icon: '↓↓↑',   strums: [{ dir: 'down', beat: 0 }, { dir: 'down', beat: 0.5 }, { dir: 'up', beat: 0.75 }] },
+    folk:    { type: 'strum', label: 'Folk',    icon: '↓↓↑↑↓↑', strums: [
         { dir: 'down', beat: 0 }, { dir: 'down', beat: 0.25 }, { dir: 'up', beat: 0.375 },
         { dir: 'up', beat: 0.5 }, { dir: 'down', beat: 0.625 }, { dir: 'up', beat: 0.75 }
     ]},
-    ballad:  { label: 'Balada',  icon: '↓↑↓↑',  strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.25 }, { dir: 'down', beat: 0.5 }, { dir: 'up', beat: 0.75 }] },
-    reggae:  { label: 'Reggae',  icon: '·↑·↑',  strums: [{ dir: 'down', beat: 0, mute: true }, { dir: 'up', beat: 0.25, staccato: true }, { dir: 'down', beat: 0.5, mute: true }, { dir: 'up', beat: 0.75, staccato: true }] },
-    waltz:   { label: 'Vals',    icon: '↓↑↑',   strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.33 }, { dir: 'up', beat: 0.66 }] }
+    ballad:  { type: 'strum', label: 'Balada',  icon: '↓↑↓↑',  strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.25 }, { dir: 'down', beat: 0.5 }, { dir: 'up', beat: 0.75 }] },
+    reggae:  { type: 'strum', label: 'Reggae',  icon: '·↑·↑',  strums: [{ dir: 'down', beat: 0, mute: true }, { dir: 'up', beat: 0.25, staccato: true }, { dir: 'down', beat: 0.5, mute: true }, { dir: 'up', beat: 0.75, staccato: true }] },
+    waltz:   { type: 'strum', label: 'Vals',    icon: '↓↑↑',   strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.33 }, { dir: 'up', beat: 0.66 }] }
+};
+
+// ─── Fingerpicking Patterns ───
+const PICKING_PATTERNS = {
+    arpegio_up: {
+        type: 'picking', label: 'Arpeg. ↑', icon: '↗',
+        // Each note played individually, ascending strings
+        beats: [[0], [1], [2], [3], [4], [5]]
+    },
+    arpegio_down: {
+        type: 'picking', label: 'Arpeg. ↓', icon: '↙',
+        beats: [[5], [4], [3], [2], [1], [0]]
+    },
+    arpegio_fast: {
+        type: 'picking', label: 'Arpeg. Ráp.', icon: '⚡↗',
+        beats: [[0, 1], [2, 3], [4, 5]]
+    },
+    travis: {
+        type: 'picking', label: 'Travis', icon: 'B↓↑↓',
+        beats: [[0], [2, 3], [1], [4, 5]]
+    },
+    waltz_pick: {
+        type: 'picking', label: 'Vals Pun. ', icon: 'B··',
+        beats: [[0, 1], [2, 3], [4, 5]]
+    },
+    pinchado: {
+        type: 'picking', label: 'Pinchado', icon: 'B+↓',
+        beats: [[0, 4, 5], [1, 2, 3]]
+    },
+    folk_pick: {
+        type: 'picking', label: 'Folk Pun.', icon: 'B↗B↗',
+        beats: [[0], [2, 3], [1], [4, 5]]
+    }
 };
 
 const STORAGE_KEY = 'guitar-chord-studio-songs';
@@ -57,15 +90,18 @@ class ChordComposer {
         this.currentStep = 0;
         this.chordDB = {};
         this.strumPattern = 'simple';
+        this.pickingPattern = 'arpegio_up';
+        this.playMode = 'strum';
         this.guitar = null;
         this.audioStarted = false;
         this.metronomeOn = false;
         this.metronomeSynth = null;
+        this.masterGain = null;
         this.currentSongId = null;
         this.savedSongs = [];
         this.isDarkMode = true;
 
-        this._playbackTimer = null;
+        this._playbackSession = 0;
         this._playbackStepCount = 0;
 
         this.initUI();
@@ -146,6 +182,7 @@ class ChordComposer {
         // Essential chords
         this._buildEssentialGrid();
         this._buildStrumGrid();
+        this._buildPickingGrid();
 
         // Load chord database
         await this.loadDatabase();
@@ -174,6 +211,48 @@ class ChordComposer {
             btn.onclick = () => this.setStrumPattern(key);
             grid.appendChild(btn);
         });
+    }
+
+    _buildPickingGrid() {
+        const grid = document.getElementById('picking-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        Object.entries(PICKING_PATTERNS).forEach(([key, p]) => {
+            const btn = document.createElement('button');
+            btn.className = 'strum-btn' + (this.playMode === 'picking' && key === this.pickingPattern ? ' active' : '');
+            btn.dataset.pattern = key;
+            btn.innerHTML = `<span class="strum-icon">${p.icon}</span><span class="strum-name">${p.label}</span>`;
+            btn.onclick = () => this.setPickingPattern(key);
+            grid.appendChild(btn);
+        });
+    }
+
+    setPickingPattern(key) {
+        if (PICKING_PATTERNS[key]) {
+            this.playMode = 'picking';
+            this.pickingPattern = key;
+            document.querySelectorAll('#picking-grid .strum-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.pattern === key);
+            });
+            document.querySelectorAll('#strum-grid .strum-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            this._markDirty();
+        }
+    }
+
+    setStrumPattern(key) {
+        if (STRUM_PATTERNS[key]) {
+            this.playMode = 'strum';
+            this.strumPattern = key;
+            document.querySelectorAll('#strum-grid .strum-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.pattern === key);
+            });
+            document.querySelectorAll('#picking-grid .strum-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            this._markDirty();
+        }
     }
 
     // ─── Theme ───
@@ -277,11 +356,19 @@ class ChordComposer {
             try {
                 const ac = Tone.getContext().rawContext;
                 this.guitar = await Soundfont.instrument(ac, 'acoustic_guitar_nylon', {
-                    soundfont: 'FluidR3_GM'
+                    soundfont: 'FluidR3_GM',
+                    gain: 0.8
                 });
+                // Route guitar through master gain for instant mute on stop
+                this.masterGain = ac.createGain();
+                this.masterGain.gain.value = 1;
+                this.masterGain.connect(ac.destination);
+                if (this.guitar.disconnect) this.guitar.disconnect();
+                if (this.guitar.connect) this.guitar.connect(this.masterGain);
             } catch (e) {
                 console.warn('Soundfont load failed, falling back to synth', e);
                 this.guitar = null;
+                this.masterGain = null;
             }
 
             // Metronome sound
@@ -314,17 +401,6 @@ class ChordComposer {
             }
         } catch(e) {
             this.setVisualTheme('naturaleza');
-        }
-    }
-
-    // ─── Strumming ───
-    setStrumPattern(key) {
-        if (STRUM_PATTERNS[key]) {
-            this.strumPattern = key;
-            document.querySelectorAll('.strum-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.pattern === key);
-            });
-            this._markDirty();
         }
     }
 
@@ -509,7 +585,8 @@ class ChordComposer {
     }
 
     clearSequence() {
-        this.stopPlayback();
+        if (this.isPlaying) this.stopPlayback();
+        this._muteAudio();
         this.sequence = [];
         this._showEmptyState();
         this._markDirty();
@@ -524,24 +601,149 @@ class ChordComposer {
     }
 
     // ─── Audio Playback ───
-    strumChord(midiNotes, startTime = null, noteDuration = 2.0, strumDef = {}) {
+
+    // Realistic strum: mimics how a pick hits strings in a real guitar stroke.
+    // - Down: low→high strings, with a non-linear timing curve (quick start, slight drag at end)
+    // - Up: high→low strings, faster overall, with emphasis on treble
+    // - Beat accent: downbeats get more energy, upbeats are lighter
+    // - Per-string velocity: shaped by string position + strum direction + random fluctuation
+    strumChord(midiNotes, baseTime, noteDuration = 1.5, strumDef = {}) {
         if (!this.guitar || !midiNotes?.length) return;
 
         const ac = Tone.getContext().rawContext;
-        const base = startTime !== null ? startTime : ac.currentTime;
-        const interval = (strumDef.dir === 'up' || strumDef.staccato) ? 0.02 : 0.032;
+        const base = baseTime != null ? baseTime : ac.currentTime;
+        const isUp = strumDef.dir === 'up';
+        const isMute = strumDef.mute;
+        const isStaccato = strumDef.staccato;
+        const beat = strumDef.beat !== undefined ? strumDef.beat : 0;
 
-        midiNotes.forEach((midi, i) => {
-            if (midi <= 0) return;
+        const count = midiNotes.length;
+        if (!count) return;
+
+        // Total time for the pick to travel across all strings
+        // Down: ~85ms, Up: ~55ms (up is naturally faster/lighter)
+        const totalSweep = isUp ? 0.055 : 0.085;
+
+        // Random energy for this entire strum (±30%) — each strum feels unique
+        const strumEnergy = 0.75 + Math.random() * 0.6;
+
+        // Beat accent: downbeats (0, 0.5) punch harder, upbeats are lighter
+        const beatNorm = ((beat % 1) + 1) % 1;
+        const isDownbeat = beatNorm < 0.01 || Math.abs(beatNorm - 0.5) < 0.01;
+        const isOffbeat = Math.abs(beatNorm - 0.25) < 0.01 || Math.abs(beatNorm - 0.75) < 0.01;
+        const beatAccent = isDownbeat ? 1.15 : (isOffbeat ? 0.88 : 1.0);
+
+        for (let i = 0; i < count; i++) {
+            // For up-strum: iterate from treble (end) to bass (start)
+            const srcIdx = isUp ? count - 1 - i : i;
+            const midi = midiNotes[srcIdx];
+            if (midi <= 0) continue;
+
             const noteName = Tone.Frequency(midi, 'midi').toNote();
-            let gain = Math.max(1.0 - (i * 0.04), 0.5);
-            if (strumDef.mute) gain *= 0.35;
-            else if (strumDef.dir === 'up') gain *= 0.75;
 
-            const humanize = (Math.random() * 0.01) - 0.005;
-            this.guitar.play(noteName, base + (i * interval) + humanize, {
-                duration: noteDuration,
-                gain: Math.max(gain, 0.35)
+            // Normalised position of this string in the strum (0=first, 1=last)
+            const pos = count > 1 ? i / (count - 1) : 0;
+
+            // --- VELOCITY (gain) ---
+            let gain;
+            if (isMute) {
+                gain = strumEnergy * 0.25;
+            } else if (isUp) {
+                // Up-strum: treble (pos=0) is strongest, bass (pos=1) is weakest
+                // Subtle dip in the middle, slight lift on bass for thump
+                gain = 0.75 - pos * 0.45;
+                if (pos > 0.8) gain += 0.1;
+            } else {
+                // Down-strum: bass (pos=0) is strongest, treble (pos=1) is weakest
+                // Slight treble boost for sparkle on the top 2 strings
+                gain = 0.85 - pos * 0.40;
+                if (pos > 0.65) gain += 0.08;
+            }
+
+            // Apply beat accent + strum energy + random per-string fluctuation
+            gain *= beatAccent * strumEnergy;
+            gain *= 0.7 + Math.random() * 0.6;
+
+            // --- TIMING ---
+            // Use an ease curve so strings are not hit at equal intervals:
+            // Down: pick starts fast, slows slightly toward the end (cubic ease-out)
+            // Up: pick starts slower, accelerates (quadratic ease-in)
+            let timeNorm;
+            if (isUp) {
+                timeNorm = 1 - Math.pow(1 - pos, 1.6);
+            } else {
+                timeNorm = Math.pow(pos, 0.65);
+            }
+            // Micro-drift per string (±2ms)
+            const microJitter = Math.random() * 0.004 - 0.002;
+            const time = base + timeNorm * totalSweep + microJitter;
+
+            // --- DURATION ---
+            let dur;
+            if (isMute) {
+                dur = 0.03 + Math.random() * 0.02;
+            } else if (isStaccato) {
+                dur = 0.10 + Math.random() * 0.06;
+            } else {
+                // Bass rings longer than treble; vary per string
+                const lengthNorm = isUp ? 1 - pos : 1 - pos * 0.6;
+                dur = noteDuration * (0.5 + lengthNorm * 0.5) * (0.75 + Math.random() * 0.5);
+                dur = Math.max(dur, Math.min(noteDuration * 0.25, 0.12));
+            }
+
+            this.guitar.play(noteName, time, {
+                duration: Math.max(dur, 0.03),
+                gain: Math.max(gain, 0.08)
+            });
+        }
+    }
+
+    // Fingerpicking: each string is plucked individually with natural velocity variation
+    fingerpickChord(midiNotes, time, measureSecs, pattern, bpm) {
+        if (!this.guitar || !midiNotes?.length) return;
+
+        const rawMidi = midiNotes;
+        const beats = pattern.beats || [];
+        if (!beats.length) return;
+
+        const beatCount = beats.length;
+
+        beats.forEach((stringIndices, b) => {
+            // Distribute beats evenly across the measure
+            const beatPos = beatCount > 1 ? b / (beatCount - 1) : 0.5;
+            const baseTime = time + beatPos * measureSecs;
+
+            // Each beat has its own energy
+            const beatEnergy = 0.7 + Math.random() * 0.4;
+
+            // Subtle push/pull per beat for natural feel
+            const groove = (Math.random() * 0.006 - 0.003);
+            const firstStringTime = baseTime + groove;
+
+            stringIndices.forEach((strIdx, si) => {
+                if (strIdx < 0 || strIdx >= rawMidi.length) return;
+                const midi = rawMidi[strIdx];
+                if (midi <= 0) return;
+
+                const noteName = Tone.Frequency(midi, 'midi').toNote();
+
+                // Organic velocity: thumb (low strings) naturally louder
+                let vel = beatEnergy * (0.6 + Math.random() * 0.5);
+                if (strIdx <= 1) vel *= 1.25;
+                else if (strIdx >= 4) vel *= 0.85;
+
+                // Spread notes within same beat group (not perfectly simultaneous)
+                const spread = si * (0.012 + Math.random() * 0.008);
+                const humanize = Math.random() * 0.008 - 0.004;
+
+                // Duration: bass notes sustain longer, treble shorter
+                const durBase = strIdx <= 1 ? 1.2 : 0.5;
+                const dur = (durBase + Math.random() * 0.4) * (measureSecs / 2);
+
+                this.guitar.play(noteName, firstStringTime + spread + humanize, {
+                    duration: Math.max(dur, 0.12),
+                    gain: Math.max(vel * 0.55, 0.15)
+                });
             });
         });
     }
@@ -560,11 +762,12 @@ class ChordComposer {
         const notes = info?.notes;
         if (!notes?.length) return;
         const ctx = Tone.getContext().rawContext;
+        const dest = this.masterGain || ctx.destination;
         notes.forEach((n, i) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(dest);
             osc.frequency.value = Tone.Frequency(n + '4').toFrequency();
             gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.035);
             gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
@@ -598,6 +801,12 @@ class ChordComposer {
             return;
         }
 
+        // Unmute master gain before starting
+        this._unmuteAudio();
+
+        // Bump session to invalidate any stale callbacks
+        this._playbackSession++;
+
         this.isPlaying = true;
         playBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pausa';
         playBtn.classList.remove('btn-primary');
@@ -610,15 +819,60 @@ class ChordComposer {
         progressEl.classList.remove('hidden');
         this._updateProgress(0, this._playbackStepCount);
 
+        // Full clean restart of transport
         Tone.Transport.stop();
         Tone.Transport.position = 0;
         Tone.Transport.cancel();
 
+        const session = this._playbackSession;
         Tone.Transport.scheduleRepeat((time) => {
+            // Double-check: only execute if this session is still current
+            if (session !== this._playbackSession) return;
             this.playStep(time);
         }, '1n');
 
         Tone.Transport.start('+0.1');
+    }
+
+    _muteAudio() {
+        if (this.masterGain) {
+            try {
+                const now = Tone.getContext().rawContext.currentTime;
+                this.masterGain.gain.cancelScheduledValues(now);
+                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+                this.masterGain.gain.linearRampToValueAtTime(0, now + 0.005);
+            } catch(e) {}
+        }
+    }
+
+    _unmuteAudio() {
+        if (this.masterGain) {
+            try {
+                const now = Tone.getContext().rawContext.currentTime;
+                this.masterGain.gain.cancelScheduledValues(now);
+                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+                this.masterGain.gain.linearRampToValueAtTime(1, now + 0.02);
+            } catch(e) {}
+        }
+    }
+
+    // Humanised micro-timing offset for groove feel
+    // Downbeats anchor the rhythm (on time or slightly ahead)
+    // Upbeats and offbeats sit slightly behind for a relaxed swing
+    _grooveOffset(beat) {
+        const beatNorm = ((beat % 1) + 1) % 1;
+        let offset = 0;
+        if (beatNorm < 0.01 || Math.abs(beatNorm - 0.5) < 0.01) {
+            // Strong beats: solid, maybe a hair ahead
+            offset = -0.004 + Math.random() * 0.004;
+        } else if (Math.abs(beatNorm - 0.25) < 0.01 || Math.abs(beatNorm - 0.75) < 0.01) {
+            // Offbeats: laid back, slightly behind
+            offset = 0.006 + Math.random() * 0.010;
+        } else {
+            // Other 16th-note positions: subtle random nudge
+            offset = (Math.random() * 0.008) - 0.004;
+        }
+        return offset;
     }
 
     playStep(time) {
@@ -636,27 +890,52 @@ class ChordComposer {
         // Metronome click on beat 0
         this._playMetronomeTick(time, true);
 
-        const pattern = STRUM_PATTERNS[this.strumPattern] || STRUM_PATTERNS.simple;
         const bpm = Tone.Transport.bpm.value;
         const measureSecs = (60 / bpm) * 4;
-        const noteDuration = Math.max(0.5, measureSecs / (pattern.strums.length + 1));
 
-        pattern.strums.forEach(strum => {
-            const strumTime = time + strum.beat * measureSecs;
-            let notes = strum.dir === 'up'
-                ? [...chord.midiNotes].reverse()
-                : chord.midiNotes;
+        if (this.playMode === 'picking') {
+            const pattern = PICKING_PATTERNS[this.pickingPattern] || PICKING_PATTERNS.arpegio_up;
+            const rawMidi = chord.dbData?.positions?.[0]?.midi || chord.midiNotes;
+            this.fingerpickChord(rawMidi, time, measureSecs, pattern, bpm);
+        } else {
+            const pattern = STRUM_PATTERNS[this.strumPattern] || STRUM_PATTERNS.simple;
+            const strums = pattern.strums;
+            const strumCount = strums.length;
 
-            if (strum.dir === 'up' && notes.length > 3) {
-                notes = notes.slice(0, 4);
-            }
+            // Pre-calculate strum beat positions for duration calculation
+            const beatPositions = strums.map(s => s.beat);
 
-            let dur = noteDuration;
-            if (strum.mute) dur = 0.05;
-            if (strum.staccato) dur = 0.15;
+            strums.forEach((strum, si) => {
+                // Groove timing: push/pull based on beat position
+                const groove = this._grooveOffset(strum.beat);
+                const strumTime = time + strum.beat * measureSecs + groove;
 
-            this.strumChord(notes, strumTime, dur, strum);
-        });
+                // Duration: ring until just before the next strum (no dead air)
+                let dur;
+                if (strum.mute) {
+                    dur = 0.04;
+                } else if (strum.staccato) {
+                    dur = 0.12;
+                } else {
+                    const nextBeat = si < strumCount - 1
+                        ? beatPositions[si + 1]
+                        : 1.0;  // end of measure
+                    const gapSecs = (nextBeat - strum.beat) * measureSecs;
+                    // Ring for ~75% of the gap — leaves natural decay tail
+                    dur = Math.max(gapSecs * 0.75, 0.12);
+                }
+
+                // Pass beat and index info for velocity accent in strumChord
+                const strumDef = {
+                    ...strum,
+                    beat: strum.beat,
+                    _index: si,
+                    _total: strumCount
+                };
+
+                this.strumChord(chord.midiNotes, strumTime, dur, strumDef);
+            });
+        }
 
         // Update progress
         this._updateProgress(this.currentStep + 1, this._playbackStepCount);
@@ -673,8 +952,14 @@ class ChordComposer {
 
     stopPlayback() {
         this.isPlaying = false;
+        this._playbackSession++;
+
+        // Stop transport immediately
         Tone.Transport.stop();
         Tone.Transport.cancel();
+
+        // Mute all audio instantly so lingering notes are silenced
+        this._muteAudio();
 
         const playBtn = document.getElementById('btn-play');
         playBtn.innerHTML = '<i class="fa-solid fa-play"></i> Reproducir';
@@ -696,6 +981,8 @@ class ChordComposer {
             key: document.getElementById('song-key')?.value || '',
             bpm: parseInt(this.bpmInput.value) || 90,
             strumPattern: this.strumPattern,
+            playMode: this.playMode,
+            pickingPattern: this.pickingPattern,
             lyrics: document.getElementById('song-lyrics')?.value || '',
             chords: this.sequence.map(c => ({
                 id: c.id,
@@ -723,6 +1010,8 @@ class ChordComposer {
                 key: data.key,
                 bpm: data.bpm,
                 strum_pattern: data.strumPattern,
+                play_mode: data.playMode || 'strum',
+                picking_pattern: data.pickingPattern || 'arpegio_up',
                 lyrics: data.lyrics,
                 chords: data.chords
             };
@@ -788,8 +1077,10 @@ class ChordComposer {
         this.bpmInput.value = data.bpm || 90;
         Tone.Transport.bpm.value = data.bpm || 90;
 
-        // Restore strum pattern
-        if (data.strumPattern) {
+        // Restore strum/picking pattern
+        if (data.playMode === 'picking' && data.pickingPattern) {
+            this.setPickingPattern(data.pickingPattern);
+        } else if (data.strumPattern) {
             this.setStrumPattern(data.strumPattern);
         }
 
@@ -859,6 +1150,8 @@ class ChordComposer {
                     key: s.key,
                     bpm: s.bpm,
                     strumPattern: s.strum_pattern,
+                    playMode: s.play_mode || 'strum',
+                    pickingPattern: s.picking_pattern || 'arpegio_up',
                     lyrics: s.lyrics,
                     chords: s.chords || [],
                     createdAt: s.created_at,
