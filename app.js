@@ -74,7 +74,11 @@ function targetNameToDisplay(root, suffix) {
 }
 
 function generateId() {
-    return 'c' + Date.now() + Math.random().toString(36).slice(2, 6);
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
 }
 
 // ─── Main Application ───
@@ -1003,7 +1007,6 @@ class ChordComposer {
         try {
             const userId = await Auth.getUserId();
             if (!userId) return false;
-            const existing = this.savedSongs.find(s => s.id === data.id);
             const supabaseRecord = {
                 title: data.title,
                 author: data.author,
@@ -1017,18 +1020,36 @@ class ChordComposer {
                 lyrics: data.lyrics,
                 chords: data.chords
             };
+
+            // Check if the song already exists in Supabase
+            const { data: existing } = await sb.from('songs')
+                .select('id')
+                .eq('id', data.id)
+                .maybeSingle();
+
             if (existing) {
                 const { error } = await sb.from('songs')
                     .update(supabaseRecord)
                     .eq('id', data.id)
                     .eq('user_id', userId);
-                if (error) console.warn('Supabase save error:', error);
+                if (error) {
+                    console.warn('Supabase save error:', error);
+                    return false;
+                }
             } else {
+                // Don't pass id so Supabase generates a proper UUID
                 const { data: inserted, error } = await sb.from('songs')
-                    .insert({ ...supabaseRecord, id: data.id, user_id: userId })
+                    .insert({ ...supabaseRecord, user_id: userId })
                     .select('id')
                     .single();
-                if (error) console.warn('Supabase insert error:', error);
+                if (error) {
+                    console.warn('Supabase insert error:', error);
+                    return false;
+                }
+                if (inserted) {
+                    data.id = inserted.id;
+                    this.currentSongId = inserted.id;
+                }
             }
             return true;
         } catch (e) {
@@ -1049,11 +1070,15 @@ class ChordComposer {
             this.savedSongs.push(data);
         }
 
-        await this._saveToSupabase(data);
+        const saved = await this._saveToSupabase(data);
         this._persistLibrary();
         this._updateLibraryBadge();
         this._markClean();
-        this._feedback('¡Canción subida!');
+        if (saved) {
+            this._feedback('¡Canción subida!');
+        } else {
+            this._feedback('Guardada localmente (sin conexión a Supabase)');
+        }
     }
 
     loadSong(id) {

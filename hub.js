@@ -269,22 +269,24 @@ async function toggleLike(songId) {
     const sb = getSupabase();
     if (sb) {
         const userId = await Auth.getUserId();
-        if (!userId) return;
-        try {
-            const { data: existing } = await sb.from('likes')
-                .select('id')
-                .eq('song_id', songId)
-                .eq('user_id', userId)
-                .maybeSingle();
-            if (existing) {
-                await sb.from('likes').delete().eq('id', existing.id);
-            } else {
-                await sb.from('likes').insert({ song_id: songId, user_id: userId });
-            }
-        } catch (e) {}
-        _cachedLikes = null; // invalidate cache
-        await renderGrid();
-        return;
+        if (userId) {
+            try {
+                const { data: existing } = await sb.from('likes')
+                    .select('id')
+                    .eq('song_id', songId)
+                    .eq('user_id', userId)
+                    .maybeSingle();
+                if (existing) {
+                    await sb.from('likes').delete().eq('id', existing.id);
+                } else {
+                    await sb.from('likes').insert({ song_id: songId, user_id: userId });
+                }
+            } catch (e) {}
+            _cachedLikes = null;
+            await renderGrid();
+            return;
+        }
+        // Fall through to localStorage if Supabase auth unavailable
     }
 
     // Fallback localStorage
@@ -377,7 +379,7 @@ async function renderGrid() {
         };
         card.querySelector('.hub-play-btn').onclick = (e) => {
             e.stopPropagation();
-            playSong(song);
+            playSong(song, e);
         };
         card.querySelector('.hub-view-btn').onclick = async (e) => {
             e.stopPropagation();
@@ -434,10 +436,9 @@ async function initAudio() {
     }
 }
 
-function playSong(song) {
+function playSong(song, e) {
     if (!song.chords?.length) return;
-    const btn = event.target.closest('.hub-play-btn') || event.target.closest('.btn');
-    const icon = btn.querySelector('i');
+    const btn = e.target.closest('.hub-play-btn') || e.target.closest('.btn');
     const wasPlaying = btn.dataset.playing === 'true';
 
     // Stop any playing
@@ -448,7 +449,13 @@ function playSong(song) {
     if (detailPlaybackTimer) { clearInterval(detailPlaybackTimer); detailPlaybackTimer = null; }
     if (isDetailPlaying) { isDetailPlaying = false; Tone.Transport.stop(); Tone.Transport.cancel(); muteAudioHub(); }
 
-    if (wasPlaying) return;
+    if (wasPlaying) {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        muteAudioHub();
+        if (detailPlaybackTimer) { clearInterval(detailPlaybackTimer); detailPlaybackTimer = null; }
+        return;
+    }
 
     initAudio().then(() => {
         playbackSessionHub++;

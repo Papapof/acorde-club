@@ -48,6 +48,7 @@ const Auth = {
                     email: username.toLowerCase().trim() + '@acordeclub.app',
                     password: password
                 });
+                if (loginError) return { ok: false, error: 'Registrado, pero requiere confirmación por correo: ' + loginError.message };
                 return { ok: true, data };
             } catch (e) {
                 return { ok: false, error: 'Error de conexión con el servidor' };
