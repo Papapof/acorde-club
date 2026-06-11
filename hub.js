@@ -230,7 +230,8 @@ async function _loadLikesFromSupabase() {
     return null;
 }
 
-async function loadSongs() {
+async function loadSongs(forceRefresh = false) {
+    if (_cachedSongs && !forceRefresh) return _cachedSongs;
     const sbData = await _loadSongsFromSupabase();
     if (sbData) { _cachedSongs = sbData; return sbData; }
     try {
@@ -241,7 +242,8 @@ async function loadSongs() {
     return _cachedSongs;
 }
 
-async function loadLikes() {
+async function loadLikes(forceRefresh = false) {
+    if (_cachedLikes && !forceRefresh) return _cachedLikes;
     const sbData = await _loadLikesFromSupabase();
     if (sbData) { _cachedLikes = sbData; return sbData; }
     try {
