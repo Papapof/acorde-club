@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acorde Club — Comunidad</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tonaljs/tonal/browser/tonal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://omnibrain.github.io/svguitar/js/svguitar.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dark">
+    <div class="background-animation"></div>
+    <div class="chilean-flag-bg"></div>
+
+    <div class="app-wrapper">
+        <div class="glass-panel main-panel">
+
+            <!-- ═══ TOP BAR: THEMES + AUTH ═══ -->
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <span class="theme-label"><i class="fa-solid fa-palette"></i> TEMAS</span>
+                    <button class="theme-btn active" data-theme="naturaleza">Naturaleza</button>
+                    <button class="theme-btn" data-theme="bliss">Bliss</button>
+                    <button class="theme-btn" data-theme="oceano">Océano</button>
+                    <button class="theme-btn" data-theme="playa">Playa</button>
+                </div>
+                <div class="top-bar-right">
+                    <span class="tag" id="hub-user-tag" style="display:none"></span>
+                    <button id="btn-auth" class="btn btn-primary btn-sm">Iniciar Sesión</button>
+                    <button id="btn-register" class="btn btn-secondary btn-sm">Registrarse</button>
+                    <button id="btn-create-song" class="btn btn-accent btn-sm" title="Crear canción">
+                        <i class="fa-solid fa-circle-plus"></i>
+                    </button>
+                    <button id="btn-theme-toggle-hub" class="btn btn-icon btn-ghost" title="Cambiar tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══ HEADER ═══ -->
+            <header>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <div class="logo-flag"></div>
+                        <i class="fa-solid fa-guitar"></i>
+                    </div>
+                    <h1>Acorde Club</h1>
+                </div>
+                <div class="header-tags">
+                    <span class="tag">Comunidad</span>
+                </div>
+            </header>
+
+            <!-- ═══ SEARCH ═══ -->
+            <div class="hub-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="hub-filter" placeholder="Busca canciones por título, artista o género..." class="form-control">
+                <span id="hub-song-count" class="hub-count">0 canciones</span>
+            </div>
+
+            <!-- ═══ SONG GRID ═══ -->
+            <div id="hub-grid" class="hub-grid">
+                <div class="empty-state" id="hub-empty">
+                    <i class="fa-solid fa-music"></i>
+                    <p>Aún no hay canciones en la comunidad.</p>
+                    <p style="font-size:0.85rem; opacity:0.7;">¡Inicia sesión y crea tu primera canción!</p>
+                </div>
+            </div>
+
+            <footer class="app-footer">
+                <span>© joaquín alejandro osses olmedo</span>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- ═══ AUTH MODAL ═══ -->
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal glass-panel" style="max-width:400px;">
+            <div class="modal-header">
+                <h2 id="auth-modal-title"><i class="fa-solid fa-user"></i> Iniciar Sesión</h2>
+                <button id="btn-close-auth" class="btn btn-sm btn-ghost"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="auth-form">
+                <div id="auth-error" class="auth-error hidden"></div>
+                <div class="metadata-field" style="margin-bottom:0.8rem;">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="auth-username" placeholder="Nombre de usuario" class="form-control">
+                </div>
+                <div class="metadata-field" style="margin-bottom:0.8rem;">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="auth-password" placeholder="Contraseña" class="form-control">
+                </div>
+                <button id="btn-auth-submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> <span id="auth-submit-text">Entrar</span>
+                </button>
+                <p style="text-align:center;margin-top:0.8rem;font-size:0.85rem;color:var(--text-secondary);">
+                    <span id="auth-toggle-text">¿No tienes cuenta?</span>
+                    <a href="#" id="btn-auth-toggle" style="color:var(--accent);font-weight:600;">Regístrate</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ SONG DETAIL MODAL ═══ -->
+    <div id="detail-modal" class="modal-overlay hidden">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2 id="detail-title"><i class="fa-solid fa-music"></i> <span></span></h2>
+                <div class="modal-actions">
+                    <button id="btn-detail-play" class="btn btn-primary btn-sm" title="Reproducir">
+                        <i class="fa-solid fa-play"></i> Reproducir
+                    </button>
+                    <button id="btn-detail-download" class="btn btn-secondary btn-sm" title="Descargar JSON">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <button id="btn-detail-close" class="btn btn-sm btn-ghost">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="detail-body" class="detail-body">
+                <div class="detail-info">
+                    <span class="detail-artist" id="detail-artist"></span>
+                    <div class="detail-tags" id="detail-tags"></div>
+                </div>
+                <div class="detail-chords" id="detail-chords">
+                    <h4><i class="fa-solid fa-guitar"></i> Acordes</h4>
+                    <div id="detail-chord-diagrams" class="detail-chord-grid"></div>
+                </div>
+                <div class="detail-lyrics" id="detail-lyrics">
+                    <h4><i class="fa-solid fa-align-left"></i> Letra</h4>
+                    <pre id="detail-lyrics-text"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Supabase keys (configúralas directo en supabase-config.js)
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (si algún día agregas build step)
+node_modules/
+dist/
+
+# Basura
+artifacts_symlink/
+JUEGODEMO/
+JUEGODEMO.rar

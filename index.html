@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acorde Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tonaljs/tonal/browser/tonal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://omnibrain.github.io/svguitar/js/svguitar.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="dark">
+    <div class="background-animation"></div>
+    <div class="chilean-flag-bg"></div>
+
+    <!-- ═══ LIBRARY MODAL ═══ -->
+    <div id="library-modal" class="modal-overlay hidden">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-book"></i> Biblioteca de Canciones</h2>
+                <div class="modal-actions">
+                    <button id="btn-import-json" class="btn btn-secondary btn-sm" title="Importar archivo JSON">
+                        <i class="fa-solid fa-file-import"></i> Importar
+                    </button>
+                    <button id="btn-close-library" class="btn btn-sm btn-ghost">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="library-search" class="library-search">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="library-filter" placeholder="Busca por título o artista..." class="form-control">
+            </div>
+            <div id="library-grid" class="library-grid">
+                <div class="empty-state">
+                    <i class="fa-solid fa-music"></i>
+                    <p>No hay canciones guardadas aún. ¡Compone algo y guárdala!</p>
+                </div>
+            </div>
+            <input type="file" id="import-file-input" accept=".json" style="display:none">
+        </div>
+    </div>
+
+    <div class="app-wrapper">
+        <div class="glass-panel main-panel">
+
+            <!-- ═══ THEME SELECTOR ═══ -->
+            <div class="theme-selector" id="theme-selector">
+                <span class="theme-label"><i class="fa-solid fa-palette"></i> TEMAS</span>
+                <button class="theme-btn active" data-theme="naturaleza">Naturaleza</button>
+                <button class="theme-btn" data-theme="bliss">Bliss</button>
+                <button class="theme-btn" data-theme="oceano">Océano</button>
+                <button class="theme-btn" data-theme="playa">Playa</button>
+            </div>
+
+            <!-- ═══ HEADER ═══ -->
+            <header>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <div class="logo-flag"></div>
+                        <i class="fa-solid fa-guitar"></i>
+                    </div>
+                    <h1>Acorde Club</h1>
+                </div>
+                <div class="header-tags">
+                    <span class="tag">Motor MIDI</span>
+                    <span class="tag">Visualizador</span>
+                    <button id="btn-go-hub" class="btn btn-secondary btn-sm" title="Ir a la comunidad">
+                        <i class="fa-solid fa-globe"></i> Comunidad
+                    </button>
+                    <button id="btn-theme-toggle" class="btn btn-icon btn-ghost" title="Cambiar tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- ═══ SONG METADATA ═══ -->
+            <section class="song-metadata">
+                <div class="metadata-row">
+                    <div class="metadata-field">
+                        <i class="fa-solid fa-heading"></i>
+                        <input type="text" id="song-title" placeholder="Título" class="form-control">
+                    </div>
+                    <div class="metadata-field">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="song-artist" placeholder="Artista" class="form-control">
+                    </div>
+                    <div class="metadata-field metadata-small">
+                        <i class="fa-solid fa-tag"></i>
+                        <select id="song-genre" class="form-control">
+                            <option value="">Género</option>
+                            <option>Rock</option>
+                            <option>Pop</option>
+                            <option>Folk</option>
+                            <option>Jazz</option>
+                            <option>Blues</option>
+                            <option>Bossa Nova</option>
+                            <option>Reggae</option>
+                            <option>Balada</option>
+                            <option>Clásica</option>
+                            <option>Flamenco</option>
+                            <option>Fusión</option>
+                            <option>Otro</option>
+                        </select>
+                    </div>
+                    <div class="metadata-field metadata-small">
+                        <i class="fa-solid fa-key"></i>
+                        <select id="song-key" class="form-control">
+                            <option value="">Tonalidad</option>
+                            <option>C</option><option>G</option><option>D</option>
+                            <option>A</option><option>E</option><option>F</option>
+                            <option>Am</option><option>Em</option><option>Dm</option>
+                            <option>Bm</option><option>C#m</option><option>F#m</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ TOOLBAR ═══ -->
+            <section class="toolbar">
+                <div class="playback-controls">
+                    <button id="btn-play" class="btn btn-primary">
+                        <i class="fa-solid fa-play"></i> Reproducir
+                    </button>
+                    <button id="btn-stop" class="btn btn-secondary">
+                        <i class="fa-solid fa-stop"></i> Detener
+                    </button>
+                    <button id="btn-metronome" class="btn btn-secondary" title="Activar metrónomo">
+                        <i class="fa-solid fa-drum"></i>
+                        <span>Metrónomo</span>
+                    </button>
+                </div>
+                <div class="settings-controls">
+                    <div class="bpm-input">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <input type="number" id="bpm" value="90" min="40" max="240" title="BPM">
+                        <span>BPM</span>
+                    </div>
+                    <button id="btn-save" class="btn btn-secondary" title="Guardar canción">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                    </button>
+                    <button id="btn-library" class="btn btn-secondary" title="Abrir biblioteca">
+                        <i class="fa-solid fa-book"></i> <span class="btn-badge" id="library-count">0</span>
+                    </button>
+                    <button id="btn-export-json" class="btn btn-secondary" title="Exportar como JSON">
+                        <i class="fa-solid fa-file-export"></i>
+                    </button>
+                    <button id="btn-export-pdf" class="btn btn-secondary" title="Exportar como PDF">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </button>
+                    <button id="btn-clear" class="btn btn-danger" title="Limpiar todo">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ═══ COMPOSER AREA ═══ -->
+            <section class="composer-container">
+                <div id="composer-area" class="composer-grid">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-music"></i>
+                        <p>Agrega acordes desde la paleta para empezar a componer.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ PLAYBACK PROGRESS ═══ -->
+            <div id="playback-progress" class="playback-progress hidden">
+                <div class="progress-track">
+                    <div id="progress-bar" class="progress-bar" style="width:0%"></div>
+                </div>
+                <span id="progress-text" class="progress-text">0 / 0</span>
+            </div>
+
+            <!-- ═══ CHORD PALETTE ═══ -->
+            <section class="palette-panel">
+                <div class="essential-palette">
+                    <h4 class="strum-title"><i class="fa-solid fa-star"></i> Acordes Esenciales</h4>
+                    <div class="essential-grid" id="essential-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <h3 class="palette-section-title">
+                    <i class="fa-solid fa-layer-group"></i> Selector de Acordes
+                </h3>
+                <div class="chord-selector">
+                    <button id="btn-preview-chord" class="btn btn-secondary" title="Escuchar acorde" disabled>
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <div class="custom-select">
+                        <select id="chord-root" disabled>
+                            <option>Cargando...</option>
+                        </select>
+                    </div>
+                    <div class="custom-select">
+                        <select id="chord-suffix" disabled>
+                            <option>Cargando...</option>
+                        </select>
+                    </div>
+                    <button id="btn-add-chord" class="btn btn-primary" disabled>
+                        <i class="fa-solid fa-plus"></i> Agregar Acorde
+                    </button>
+                    <span id="db-status" class="db-status">Cargando base de datos...</span>
+                </div>
+
+                <div class="strum-section">
+                    <h4 class="strum-title"><i class="fa-solid fa-guitar"></i> Patrón de Rasgueo</h4>
+                    <div class="strum-btn-grid" id="strum-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ LYRICS ═══ -->
+            <section class="lyrics-panel">
+                <h3><i class="fa-solid fa-align-left"></i> Letra</h3>
+                <textarea id="song-lyrics"
+                    placeholder="Escribe la letra aquí...&#10;&#10;Usa corchetes para los acordes sobre las palabras:&#10;[Am] Estoy muy solo y triste&#10;[F#] acá en este mundo abandonado"
+                    class="form-control lyrics-input"></textarea>
+            </section>
+
+            <footer class="app-footer">
+                <span>© joaquín alejandro osses olmedo</span>
+            </footer>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="app.js?v=12"></script>
+</body>
+</html>
