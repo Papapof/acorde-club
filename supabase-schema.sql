@@ -62,22 +62,26 @@ ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
 -- ─── POLÍTICAS: songs ───
 
 -- Cualquiera (autenticado o no) puede leer canciones
+DROP POLICY IF EXISTS "songs_select_all" ON songs;
 CREATE POLICY "songs_select_all" ON songs
     FOR SELECT
     USING (true);
 
 -- Solo el dueño puede insertar
+DROP POLICY IF EXISTS "songs_insert_own" ON songs;
 CREATE POLICY "songs_insert_own" ON songs
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- Solo el dueño puede actualizar
+DROP POLICY IF EXISTS "songs_update_own" ON songs;
 CREATE POLICY "songs_update_own" ON songs
     FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
 -- Solo el dueño puede eliminar
+DROP POLICY IF EXISTS "songs_delete_own" ON songs;
 CREATE POLICY "songs_delete_own" ON songs
     FOR DELETE
     USING (auth.uid() = user_id);
@@ -85,16 +89,19 @@ CREATE POLICY "songs_delete_own" ON songs
 -- ─── POLÍTICAS: likes ───
 
 -- Cualquiera puede leer likes
+DROP POLICY IF EXISTS "likes_select_all" ON likes;
 CREATE POLICY "likes_select_all" ON likes
     FOR SELECT
     USING (true);
 
 -- El usuario puede dar like (solo para sí mismo)
+DROP POLICY IF EXISTS "likes_insert_own" ON likes;
 CREATE POLICY "likes_insert_own" ON likes
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- El usuario puede quitar su propio like
+DROP POLICY IF EXISTS "likes_delete_own" ON likes;
 CREATE POLICY "likes_delete_own" ON likes
     FOR DELETE
     USING (auth.uid() = user_id);
@@ -113,16 +120,19 @@ CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Cualquiera puede leer los perfiles de los usuarios
+DROP POLICY IF EXISTS "profiles_select_all" ON profiles;
 CREATE POLICY "profiles_select_all" ON profiles
     FOR SELECT
     USING (true);
 
 -- Un usuario puede insertar su propio perfil
+DROP POLICY IF EXISTS "profiles_insert_own" ON profiles;
 CREATE POLICY "profiles_insert_own" ON profiles
     FOR INSERT
     WITH CHECK (auth.uid() = id);
 
 -- Un usuario puede actualizar su propio perfil
+DROP POLICY IF EXISTS "profiles_update_own" ON profiles;
 CREATE POLICY "profiles_update_own" ON profiles
     FOR UPDATE
     USING (auth.uid() = id)
