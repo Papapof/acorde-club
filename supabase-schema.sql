@@ -6,8 +6,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ═══ TABLA: canciones ═══
 CREATE TABLE IF NOT EXISTS songs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     title TEXT NOT NULL DEFAULT 'Sin título',
+    author TEXT NOT NULL DEFAULT '',
     artist TEXT NOT NULL DEFAULT '',
     genre TEXT NOT NULL DEFAULT '',
     key TEXT NOT NULL DEFAULT '',
@@ -25,21 +25,12 @@ CREATE TABLE IF NOT EXISTS songs (
 CREATE TABLE IF NOT EXISTS likes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     song_id UUID REFERENCES songs(id) ON DELETE CASCADE NOT NULL,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE(song_id, user_id)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ═══ MIGRACIÓN: agregar columnas (si no existen) ═══
-ALTER TABLE songs ADD COLUMN IF NOT EXISTS play_mode TEXT NOT NULL DEFAULT 'strum';
-ALTER TABLE songs ADD COLUMN IF NOT EXISTS picking_pattern TEXT NOT NULL DEFAULT 'arpegio_up';
-ALTER TABLE songs ADD COLUMN IF NOT EXISTS author TEXT NOT NULL DEFAULT '';
-
 -- ═══ ÍNDICES ═══
-CREATE INDEX IF NOT EXISTS idx_songs_user_id ON songs(user_id);
 CREATE INDEX IF NOT EXISTS idx_songs_updated_at ON songs(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_likes_song_id ON likes(song_id);
-CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id);
 
 -- ═══ TRIGGER: updated_at ═══
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -62,30 +53,30 @@ ALTER TABLE likes ENABLE ROW LEVEL SECURITY;
 
 -- ─── POLÍTICAS: songs ───
 
--- Cualquiera (autenticado o no) puede leer canciones
+-- Cualquiera puede leer canciones
 DROP POLICY IF EXISTS "songs_select_all" ON songs;
 CREATE POLICY "songs_select_all" ON songs
     FOR SELECT
     USING (true);
 
--- Solo el dueño puede insertar
-DROP POLICY IF EXISTS "songs_insert_own" ON songs;
-CREATE POLICY "songs_insert_own" ON songs
+-- Cualquiera puede insertar canciones
+DROP POLICY IF EXISTS "songs_insert_all" ON songs;
+CREATE POLICY "songs_insert_all" ON songs
     FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK (true);
 
--- Solo el dueño puede actualizar
-DROP POLICY IF EXISTS "songs_update_own" ON songs;
-CREATE POLICY "songs_update_own" ON songs
+-- Cualquiera puede actualizar canciones
+DROP POLICY IF EXISTS "songs_update_all" ON songs;
+CREATE POLICY "songs_update_all" ON songs
     FOR UPDATE
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id);
+    USING (true)
+    WITH CHECK (true);
 
--- Solo el dueño puede eliminar
-DROP POLICY IF EXISTS "songs_delete_own" ON songs;
-CREATE POLICY "songs_delete_own" ON songs
+-- Cualquiera puede eliminar canciones
+DROP POLICY IF EXISTS "songs_delete_all" ON songs;
+CREATE POLICY "songs_delete_all" ON songs
     FOR DELETE
-    USING (auth.uid() = user_id);
+    USING (true);
 
 -- ─── POLÍTICAS: likes ───
 
@@ -95,73 +86,15 @@ CREATE POLICY "likes_select_all" ON likes
     FOR SELECT
     USING (true);
 
--- El usuario puede dar like (solo para sí mismo)
-DROP POLICY IF EXISTS "likes_insert_own" ON likes;
-CREATE POLICY "likes_insert_own" ON likes
+-- Cualquiera puede insertar likes
+DROP POLICY IF EXISTS "likes_insert_all" ON likes;
+CREATE POLICY "likes_insert_all" ON likes
     FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
+    WITH CHECK (true);
 
--- El usuario puede quitar su propio like
-DROP POLICY IF EXISTS "likes_delete_own" ON likes;
-CREATE POLICY "likes_delete_own" ON likes
+-- Cualquiera puede eliminar likes
+DROP POLICY IF EXISTS "likes_delete_all" ON likes;
+CREATE POLICY "likes_delete_all" ON likes
     FOR DELETE
-    USING (auth.uid() = user_id);
-
--- ═══ TABLA: perfiles ═══
-CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- ═══ ÍNDICE: perfiles ═══
-CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
-
--- ═══ ROW LEVEL SECURITY: perfiles ═══
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
--- Cualquiera puede leer los perfiles de los usuarios
-DROP POLICY IF EXISTS "profiles_select_all" ON profiles;
-CREATE POLICY "profiles_select_all" ON profiles
-    FOR SELECT
     USING (true);
-
--- Un usuario puede insertar su propio perfil
-DROP POLICY IF EXISTS "profiles_insert_own" ON profiles;
-CREATE POLICY "profiles_insert_own" ON profiles
-    FOR INSERT
-    WITH CHECK (auth.uid() = id);
-
--- Un usuario puede actualizar su propio perfil
-DROP POLICY IF EXISTS "profiles_update_own" ON profiles;
-CREATE POLICY "profiles_update_own" ON profiles
-    FOR UPDATE
-    USING (auth.uid() = id)
-    WITH CHECK (auth.uid() = id);
-
--- ═══ TRIGGER: crear perfil al registrarse ═══
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO public.profiles (id, username)
-    VALUES (
-        new.id,
-        COALESCE(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
-    )
-    ON CONFLICT (id) DO NOTHING;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW
-    EXECUTE FUNCTION handle_new_user();
-
--- Migración retroactiva: crear perfiles para usuarios existentes
-INSERT INTO public.profiles (id, username)
-SELECT id, COALESCE(raw_user_meta_data->>'display_name', split_part(email, '@', 1))
-FROM auth.users
-ON CONFLICT (id) DO NOTHING;
 

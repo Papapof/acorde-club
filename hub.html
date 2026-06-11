@@ -19,7 +19,7 @@
     <div class="app-wrapper">
         <div class="glass-panel main-panel">
 
-            <!-- ═══ TOP BAR: THEMES + AUTH ═══ -->
+            <!-- ═══ TOP BAR ═══ -->
             <div class="top-bar">
                 <div class="top-bar-left">
                     <span class="theme-label"><i class="fa-solid fa-palette"></i> TEMAS</span>
@@ -29,9 +29,6 @@
                     <button class="theme-btn" data-theme="playa">Playa</button>
                 </div>
                 <div class="top-bar-right">
-                    <span class="tag" id="hub-user-tag" style="display:none"></span>
-                    <button id="btn-auth" class="btn btn-primary btn-sm">Iniciar Sesión</button>
-                    <button id="btn-register" class="btn btn-secondary btn-sm">Registrarse</button>
                     <button id="btn-create-song" class="btn btn-accent btn-sm" title="Crear canción">
                         <i class="fa-solid fa-circle-plus"></i>
                     </button>
@@ -78,7 +75,7 @@
                 <div class="empty-state" id="hub-empty">
                     <i class="fa-solid fa-music"></i>
                     <p>Aún no hay canciones en la comunidad.</p>
-                    <p style="font-size:0.85rem; opacity:0.7;">¡Inicia sesión y crea tu primera canción!</p>
+                    <p style="font-size:0.85rem; opacity:0.7;">¡Crea tu primera canción!</p>
                 </div>
             </div>
 
@@ -86,34 +83,6 @@
                 <span>© joaquín alejandro osses olmedo</span>
             </footer>
 
-        </div>
-    </div>
-
-    <!-- ═══ AUTH MODAL ═══ -->
-    <div id="auth-modal" class="modal-overlay hidden">
-        <div class="modal glass-panel" style="max-width:400px;">
-            <div class="modal-header">
-                <h2 id="auth-modal-title"><i class="fa-solid fa-user"></i> Iniciar Sesión</h2>
-                <button id="btn-close-auth" class="btn btn-sm btn-ghost"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="auth-form">
-                <div id="auth-error" class="auth-error hidden"></div>
-                <div class="metadata-field" style="margin-bottom:0.8rem;">
-                    <i class="fa-solid fa-user"></i>
-                    <input type="text" id="auth-username" placeholder="Nombre de usuario" class="form-control" autocomplete="off" name="auth-username">
-                </div>
-                <div class="metadata-field" style="margin-bottom:0.8rem;">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="auth-password" placeholder="Contraseña" class="form-control" autocomplete="new-password" name="auth-password">
-                </div>
-                <button id="btn-auth-submit" class="btn btn-primary" style="width:100%;justify-content:center;">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> <span id="auth-submit-text">Entrar</span>
-                </button>
-                <p style="text-align:center;margin-top:0.8rem;font-size:0.85rem;color:var(--text-secondary);">
-                    <span id="auth-toggle-text">¿No tienes cuenta?</span>
-                    <a href="#" id="btn-auth-toggle" style="color:var(--accent);font-weight:600;">Regístrate</a>
-                </p>
-            </div>
         </div>
     </div>
 
@@ -152,7 +121,6 @@
     </div>
 
     <script src="supabase-config.js"></script>
-    <script src="auth.js"></script>
     <script src="hub.js"></script>
 </body>
 </html>

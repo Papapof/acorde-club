@@ -84,11 +84,6 @@ function generateId() {
 // ─── Main Application ───
 class ChordComposer {
     constructor() {
-        if (!Auth.isLoggedIn()) {
-            window.location.href = 'hub.html';
-            return;
-        }
-
         this.sequence = [];
         this.isPlaying = false;
         this.currentStep = 0;
@@ -812,6 +807,7 @@ class ChordComposer {
         this._playbackSession++;
 
         this.isPlaying = true;
+        document.body.classList.add('is-playing');
         playBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pausa';
         playBtn.classList.remove('btn-primary');
         playBtn.classList.add('btn-danger');
@@ -957,8 +953,8 @@ class ChordComposer {
     stopPlayback() {
         this.isPlaying = false;
         this._playbackSession++;
+        document.body.classList.remove('is-playing');
 
-        // Stop transport immediately
         Tone.Transport.stop();
         Tone.Transport.cancel();
 
@@ -979,7 +975,7 @@ class ChordComposer {
     getSongData() {
         return {
             id: this.currentSongId || generateId(),
-            author: Auth.getUsername() || '',
+            author: document.getElementById('song-artist')?.value?.trim() || '',
             title: document.getElementById('song-title')?.value?.trim() || 'Sin título',
             artist: document.getElementById('song-artist')?.value?.trim() || '',
             genre: document.getElementById('song-genre')?.value || '',
@@ -1005,8 +1001,6 @@ class ChordComposer {
         const sb = getSupabase ? getSupabase() : null;
         if (!sb) return false;
         try {
-            const userId = await Auth.getUserId();
-            if (!userId) return false;
             const supabaseRecord = {
                 title: data.title,
                 author: data.author,
@@ -1030,16 +1024,14 @@ class ChordComposer {
             if (existing) {
                 const { error } = await sb.from('songs')
                     .update(supabaseRecord)
-                    .eq('id', data.id)
-                    .eq('user_id', userId);
+                    .eq('id', data.id);
                 if (error) {
                     console.warn('Supabase save error:', error);
                     return false;
                 }
             } else {
-                // Don't pass id so Supabase generates a proper UUID
                 const { data: inserted, error } = await sb.from('songs')
-                    .insert({ ...supabaseRecord, user_id: userId })
+                    .insert(supabaseRecord)
                     .select('id')
                     .single();
                 if (error) {
@@ -1140,8 +1132,7 @@ class ChordComposer {
         const sb = getSupabase ? getSupabase() : null;
         if (!sb) return;
         try {
-            const userId = await Auth.getUserId();
-            if (userId) await sb.from('songs').delete().eq('id', id).eq('user_id', userId);
+            await sb.from('songs').delete().eq('id', id);
         } catch (e) {}
     }
 
@@ -1162,11 +1153,8 @@ class ChordComposer {
         const sb = getSupabase ? getSupabase() : null;
         if (!sb) return null;
         try {
-            const userId = await Auth.getUserId();
-            if (!userId) return null;
             const { data, error } = await sb.from('songs')
                 .select('*')
-                .eq('user_id', userId)
                 .order('updated_at', { ascending: false });
             if (!error && data) {
                 return data.map(s => ({

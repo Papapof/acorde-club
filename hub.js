@@ -13,14 +13,12 @@ let playbackSessionHub = 0;
 
 // ─── Init ───
 document.addEventListener('DOMContentLoaded', async () => {
-    await Auth.refreshSession();
     loadTheme();
     loadVisualTheme();
-    setupAuth();
+    setupCreateSong();
     setupSearch();
     setupThemeSelector();
     setupDetailModal();
-    // Clear any browser autofill pollution in search input
     const filterInput = document.getElementById('hub-filter');
     if (filterInput) { filterInput.value = ''; }
     await renderGrid();
@@ -67,132 +65,15 @@ function setupThemeSelector() {
     });
 }
 
-// ─── Auth UI ───
-let authMode = 'login';
-
-function setupAuth() {
-    updateAuthUI();
-    document.getElementById('btn-auth').onclick = async (e) => {
+// ─── Create Song ───
+function setupCreateSong() {
+    const handler = (e) => {
         e.stopPropagation();
-        if (Auth.isLoggedIn()) { await Auth.logout(); updateAuthUI(); await renderGrid(); }
-        else openAuthModal('login');
+        window.location.href = 'index.html';
     };
-    document.getElementById('btn-register').onclick = (e) => {
-        e.stopPropagation();
-        openAuthModal('register');
-    };
-    const createSongHandler = (e) => {
-        e.stopPropagation();
-        if (Auth.isLoggedIn()) window.location.href = 'index.html';
-        else openAuthModal('login');
-    };
-    document.getElementById('btn-create-song').onclick = createSongHandler;
+    document.getElementById('btn-create-song').onclick = handler;
     const heroBtn = document.getElementById('btn-create-song-hero');
-    if (heroBtn) heroBtn.onclick = createSongHandler;
-    document.getElementById('btn-close-auth').onclick = () => closeAuthModal();
-    document.getElementById('auth-modal').onclick = (e) => {
-        if (e.target === e.currentTarget) closeAuthModal();
-    };
-    document.getElementById('btn-auth-submit').onclick = async () => { await handleAuth(); };
-    document.getElementById('btn-auth-toggle').onclick = (e) => {
-        e.preventDefault();
-        authMode = authMode === 'login' ? 'register' : 'login';
-        updateAuthForm();
-    };
-    document.getElementById('auth-password').onkeydown = async (e) => {
-        if (e.key === 'Enter') await handleAuth();
-    };
-    document.getElementById('auth-username').onkeydown = (e) => {
-        if (e.key === 'Enter') document.getElementById('auth-password').focus();
-    };
-}
-
-function updateAuthUI() {
-    const loggedIn = Auth.isLoggedIn();
-    const btnLogin = document.getElementById('btn-auth');
-    const btnRegister = document.getElementById('btn-register');
-    const userTag = document.getElementById('hub-user-tag');
-    const createBtn = document.getElementById('btn-create-song');
-
-    if (loggedIn) {
-        btnLogin.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión';
-        btnLogin.className = 'btn btn-secondary btn-sm';
-        btnRegister.style.display = 'none';
-        userTag.style.display = '';
-        userTag.textContent = '👤 ' + Auth.getUsername();
-    } else {
-        btnLogin.innerHTML = 'Iniciar Sesión';
-        btnLogin.className = 'btn btn-primary btn-sm';
-        btnRegister.style.display = '';
-        btnRegister.innerHTML = 'Registrarse';
-        btnRegister.className = 'btn btn-secondary btn-sm';
-        userTag.style.display = 'none';
-    }
-}
-
-function openAuthModal(mode) {
-    authMode = mode;
-    updateAuthForm();
-    document.getElementById('auth-modal').classList.remove('hidden');
-    document.getElementById('auth-username').value = '';
-    document.getElementById('auth-password').value = '';
-    hideAuthError();
-    setTimeout(() => document.getElementById('auth-username').focus(), 100);
-}
-
-function closeAuthModal() {
-    document.getElementById('auth-modal').classList.add('hidden');
-}
-
-function updateAuthForm() {
-    const title = document.getElementById('auth-modal-title');
-    const submitText = document.getElementById('auth-submit-text');
-    const toggleText = document.getElementById('auth-toggle-text');
-    const toggleLink = document.getElementById('btn-auth-toggle');
-    if (authMode === 'login') {
-        title.innerHTML = '<i class="fa-solid fa-user"></i> Iniciar Sesión';
-        submitText.textContent = 'Entrar';
-        toggleText.textContent = '¿No tienes cuenta? ';
-        toggleLink.textContent = 'Regístrate';
-    } else {
-        title.innerHTML = '<i class="fa-solid fa-user-plus"></i> Crear Cuenta';
-        submitText.textContent = 'Registrarse';
-        toggleText.textContent = '¿Ya tienes cuenta? ';
-        toggleLink.textContent = 'Inicia Sesión';
-    }
-    hideAuthError();
-}
-
-function showAuthError(msg) {
-    const el = document.getElementById('auth-error');
-    el.textContent = msg;
-    el.classList.remove('hidden');
-}
-
-function hideAuthError() {
-    document.getElementById('auth-error').classList.add('hidden');
-}
-
-async function handleAuth() {
-    const username = document.getElementById('auth-username').value.trim();
-    const password = document.getElementById('auth-password').value;
-    if (!username || !password) { showAuthError('Completa todos los campos'); return; }
-
-    let result;
-    if (authMode === 'login') {
-        result = await Auth.login(username, password);
-    } else {
-        result = await Auth.register(username, password);
-    }
-
-    if (result.ok) {
-        closeAuthModal();
-        updateAuthUI();
-        await Auth.refreshSession();
-        await renderGrid();
-    } else {
-        showAuthError(result.error);
-    }
+    if (heroBtn) heroBtn.onclick = handler;
 }
 
 // ─── Songs Data ───
@@ -222,7 +103,7 @@ async function _loadLikesFromSupabase() {
             const likes = {};
             data.forEach(l => {
                 if (!likes[l.song_id]) likes[l.song_id] = [];
-                likes[l.song_id].push(l.user_id);
+                likes[l.song_id].push('anon');
             });
             return likes;
         }
@@ -258,48 +139,39 @@ function getLikeCount(songId, likes) {
 }
 
 function hasUserLiked(songId, likes) {
-    const user = Auth.getUsername();
-    if (!user) return false;
-    const userId = Auth.getSession()?.supabaseUserId || user;
-    return (likes[songId] || []).includes(userId);
+    const likedSongs = _getLikedSongsLocal();
+    return likedSongs.includes(songId);
+}
+
+function _getLikedSongsLocal() {
+    try {
+        const raw = localStorage.getItem('acorde-club-liked-songs');
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+}
+
+function _saveLikedSongsLocal(songIds) {
+    try { localStorage.setItem('acorde-club-liked-songs', JSON.stringify(songIds)); } catch (e) {}
 }
 
 async function toggleLike(songId) {
-    const user = Auth.getUsername();
-    if (!user) { openAuthModal('login'); return; }
+    const likedSongs = _getLikedSongsLocal();
+    const idx = likedSongs.indexOf(songId);
+    if (idx >= 0) likedSongs.splice(idx, 1);
+    else likedSongs.push(songId);
+    _saveLikedSongsLocal(likedSongs);
 
-    const sb = getSupabase();
-    if (sb) {
-        const userId = await Auth.getUserId();
-        if (userId) {
-            try {
-                const { data: existing } = await sb.from('likes')
-                    .select('id')
-                    .eq('song_id', songId)
-                    .eq('user_id', userId)
-                    .maybeSingle();
-                if (existing) {
-                    await sb.from('likes').delete().eq('id', existing.id);
-                } else {
-                    await sb.from('likes').insert({ song_id: songId, user_id: userId });
-                }
-            } catch (e) {}
-            _cachedLikes = null;
-            await renderGrid();
-            return;
-        }
-        // Fall through to localStorage if Supabase auth unavailable
-    }
-
-    // Fallback localStorage
     const likes = await loadLikes();
     if (!likes[songId]) likes[songId] = [];
-    const idx = likes[songId].indexOf(user);
-    if (idx >= 0) likes[songId].splice(idx, 1);
-    else likes[songId].push(user);
+    const userLikeIdx = likes[songId].indexOf('local');
+    if (idx >= 0) {
+        if (userLikeIdx >= 0) likes[songId].splice(userLikeIdx, 1);
+    } else {
+        likes[songId].push('local');
+    }
     try { localStorage.setItem(LIKES_KEY, JSON.stringify(likes)); } catch (e) {}
-    _cachedLikes = likes;
-    renderGrid();
+    _cachedLikes = null;
+    await renderGrid();
 }
 
 // ─── Search ───
@@ -452,6 +324,7 @@ function playSong(song, e) {
     if (isDetailPlaying) { isDetailPlaying = false; Tone.Transport.stop(); Tone.Transport.cancel(); muteAudioHub(); }
 
     if (wasPlaying) {
+        document.body.classList.remove('is-playing');
         Tone.Transport.stop();
         Tone.Transport.cancel();
         muteAudioHub();
@@ -461,6 +334,7 @@ function playSong(song, e) {
 
     initAudio().then(() => {
         playbackSessionHub++;
+        document.body.classList.add('is-playing');
         unmuteAudioHub();
         btn.dataset.playing = 'true';
         btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
@@ -496,6 +370,7 @@ function playSong(song, e) {
 
         detailPlaybackTimer = setInterval(() => {
             if (btn.dataset.playing !== 'true') {
+                document.body.classList.remove('is-playing');
                 Tone.Transport.stop();
                 Tone.Transport.cancel();
                 muteAudioHub();
@@ -617,6 +492,7 @@ async function openDetail(songId) {
 
 function closeDetail() {
     document.getElementById('detail-modal').classList.add('hidden');
+    document.body.classList.remove('is-playing');
     if (detailPlaybackTimer) { clearInterval(detailPlaybackTimer); detailPlaybackTimer = null; }
     if (isDetailPlaying) {
         isDetailPlaying = false;
@@ -631,6 +507,7 @@ function playDetail(song) {
     const btn = document.getElementById('btn-detail-play');
 
     if (isDetailPlaying) {
+        document.body.classList.remove('is-playing');
         isDetailPlaying = false;
         Tone.Transport.stop();
         Tone.Transport.cancel();
@@ -642,6 +519,7 @@ function playDetail(song) {
 
     initAudio().then(() => {
         playbackSessionHub++;
+        document.body.classList.add('is-playing');
         unmuteAudioHub();
         isDetailPlaying = true;
         btn.innerHTML = '<i class="fa-solid fa-stop"></i> Detener';
