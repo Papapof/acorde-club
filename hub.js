@@ -270,25 +270,11 @@ async function renderGrid() {
 }
 
 function muteAudioHub() {
-    if (masterGainHub) {
-        try {
-            const now = Tone.getContext().rawContext.currentTime;
-            masterGainHub.gain.cancelScheduledValues(now);
-            masterGainHub.gain.setValueAtTime(masterGainHub.gain.value, now);
-            masterGainHub.gain.linearRampToValueAtTime(0, now + 0.005);
-        } catch(e) {}
-    }
+    muteAudioOn(masterGainHub);
 }
 
 function unmuteAudioHub() {
-    if (masterGainHub) {
-        try {
-            const now = Tone.getContext().rawContext.currentTime;
-            masterGainHub.gain.cancelScheduledValues(now);
-            masterGainHub.gain.setValueAtTime(masterGainHub.gain.value, now);
-            masterGainHub.gain.linearRampToValueAtTime(1, now + 0.02);
-        } catch(e) {}
-    }
+    unmuteAudioOn(masterGainHub);
 }
 
 // ─── Playback (simple) ───
@@ -351,18 +337,48 @@ function playSong(song, e) {
             if (session !== playbackSessionHub) return;
             const chord = song.chords[step];
             if (!chord) return;
-            const notes = chord.midiNotes?.filter(n => n > 0);
-            if (notes?.length) {
+
+            const measureSecs = (60 / bpm) * 4;
+            const playMode = song.play_mode || 'strum';
+            const strumPattern = song.strum_pattern || 'simple';
+            const pickingPattern = song.picking_pattern || 'arpegio_up';
+
+            if (playMode === 'picking') {
+                const pattern = PICKING_PATTERNS[pickingPattern] || PICKING_PATTERNS.arpegio_up;
+                const rawMidi = chord.dbData?.positions?.[0]?.midi || chord.midiNotes;
                 if (guitarSynth) {
-                    notes.forEach((midi, i) => {
-                        const vel = 0.4 + Math.random() * 0.35;
-                        const drift = Math.random() * 0.008 - 0.004;
-                        guitarSynth.play(Tone.Frequency(midi, 'midi').toNote(), time + i * 0.035 + drift, { duration: 1.2 + Math.random() * 0.6, gain: Math.max(vel, 0.2) });
-                    });
+                    fingerpickChordOn(guitarSynth, rawMidi, time, measureSecs, pattern, bpm);
                 } else {
-                    fallbackPlay(notes, time);
+                    const notes = chord.midiNotes?.filter(n => n > 0);
+                    if (notes?.length) fallbackPlayNotes(notes, time);
                 }
+            } else {
+                const pattern = STRUM_PATTERNS[strumPattern] || STRUM_PATTERNS.simple;
+                const strums = pattern.strums;
+                const strumCount = strums.length;
+                const beatPositions = strums.map(s => s.beat);
+                strums.forEach((strum, si) => {
+                    const grv = grooveOffset(strum.beat);
+                    const strumTime = time + strum.beat * measureSecs + grv;
+                    let dur;
+                    if (strum.mute) {
+                        dur = 0.04;
+                    } else if (strum.staccato) {
+                        dur = 0.12;
+                    } else {
+                        const nextBeat = si < strumCount - 1 ? beatPositions[si + 1] : 1.0;
+                        const gapSecs = (nextBeat - strum.beat) * measureSecs;
+                        dur = Math.max(gapSecs * 0.75, 0.12);
+                    }
+                    if (guitarSynth) {
+                        strumChordOn(guitarSynth, chord.midiNotes, strumTime, dur, { ...strum, beat: strum.beat });
+                    } else {
+                        const notes = chord.midiNotes?.filter(n => n > 0);
+                        if (notes?.length) fallbackPlayNotes(notes, time);
+                    }
+                });
             }
+
             step = (step + 1) % song.chords.length;
         }, '1n');
 
@@ -381,29 +397,226 @@ function playSong(song, e) {
 }
 
 function fallbackPlay(midiNotes, time) {
-    const ctx = Tone.getContext().rawContext;
-    midiNotes.forEach((midi, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = Tone.Frequency(midi, 'midi').toFrequency();
-        gain.gain.setValueAtTime(0.08, time + i * 0.035);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 1.5);
-        osc.start(time + i * 0.035);
-        osc.stop(time + 1.8);
-    });
+    fallbackPlayNotes(midiNotes, time);
 }
 
-// ─── Download ───
-function downloadSong(song) {
-    const blob = new Blob([JSON.stringify(song, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (song.title || 'cancion').toLowerCase().replace(/\s+/g, '-') + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
+// ─── Download PDF ───
+async function downloadSong(song) {
+    const opt = {
+        margin: 0.5,
+        filename: `${(song.title || 'cancion').toLowerCase().replace(/\s+/g, '-')}-partitura.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    const printContainer = document.createElement('div');
+    printContainer.style.padding = '20px';
+    printContainer.style.background = '#ffffff';
+    printContainer.style.color = '#000000';
+    printContainer.style.fontFamily = 'Outfit, sans-serif';
+
+    // Header
+    const header = document.createElement('div');
+    header.style.marginBottom = '20px';
+    header.innerHTML = `
+        <h1 style="margin:0 0 5px 0; line-height:1.1;">
+            <span style="font-size:2.5rem; font-weight:800; color:#000;">${song.title || 'Sin título'}</span>
+            <span style="font-size:1.8rem; font-weight:300; color:#666;"> por ${song.artist || 'Artista desconocido'}</span>
+        </h1>
+        <div style="color:#999; font-size:0.9rem; margin-top:5px;">
+            ${song.genre || ''}${song.genre && song.key ? ' · ' : ''}${song.key || ''}
+        </div>
+    `;
+    printContainer.appendChild(header);
+
+    // Lyrics with chords
+    const lyricsText = song.lyrics || '';
+    if (lyricsText.trim().length > 0) {
+        const lyricsDiv = document.createElement('div');
+        lyricsDiv.style.fontFamily = "'Courier New', monospace";
+        lyricsDiv.style.fontSize = '13px';
+        lyricsDiv.style.lineHeight = '1.8';
+        lyricsDiv.style.marginBottom = '30px';
+        lyricsDiv.style.whiteSpace = 'pre-wrap';
+
+        lyricsText.split('\n').forEach(line => {
+            const lineEl = document.createElement('div');
+            if (line.includes('[')) lineEl.style.paddingTop = '1.2em';
+            lineEl.style.minHeight = '1.3em';
+            lineEl.innerHTML = line.replace(/\[([^\]]+)\]/g,
+                `<span style="position:relative; top:-1.3em; display:inline-block; width:0; overflow:visible; font-weight:bold; font-size:14px; color:#000;">$1</span>`) || ' ';
+            lyricsDiv.appendChild(lineEl);
+        });
+        printContainer.appendChild(lyricsDiv);
+    }
+
+    // Chords grid
+    const chords = song.chords || [];
+    if (chords.length > 0) {
+        const unique = [];
+        const seen = new Set();
+        chords.forEach(c => {
+            if (!seen.has(c.displayName)) {
+                seen.add(c.displayName);
+                unique.push(c);
+            }
+        });
+
+        if (unique.length > 0) {
+            const gridTitle = document.createElement('h3');
+            gridTitle.textContent = 'Acordes';
+            gridTitle.style.marginBottom = '15px';
+            gridTitle.style.borderTop = '1px solid #ccc';
+            gridTitle.style.paddingTop = '15px';
+            gridTitle.style.fontSize = '1.2rem';
+            gridTitle.style.color = '#333';
+            printContainer.appendChild(gridTitle);
+
+            const grid = document.createElement('div');
+            grid.style.display = 'flex';
+            grid.style.flexWrap = 'wrap';
+            grid.style.gap = '20px';
+
+            unique.forEach(cData => {
+                const { displayName, dbData } = cData;
+                const block = document.createElement('div');
+                block.style.display = 'flex';
+                block.style.flexDirection = 'column';
+                block.style.alignItems = 'center';
+                block.style.width = '70px';
+
+                const nameEl = document.createElement('div');
+                nameEl.style.fontWeight = 'bold';
+                nameEl.style.fontSize = '1.1rem';
+                nameEl.style.marginBottom = '5px';
+                nameEl.textContent = displayName;
+                block.appendChild(nameEl);
+
+                const diagramContainer = document.createElement('div');
+                diagramContainer.style.width = '70px';
+                diagramContainer.style.height = '100px';
+                block.appendChild(diagramContainer);
+
+                if (dbData?.positions?.[0]) {
+                    drawPDFDiagram(diagramContainer, dbData.positions[0]);
+                }
+
+                grid.appendChild(block);
+            });
+            printContainer.appendChild(grid);
+        }
+    }
+
+    // Render to PDF
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '0';
+    wrapper.style.width = '100vw';
+    wrapper.style.minHeight = '100vh';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.zIndex = '999999';
+    wrapper.style.overflow = 'auto';
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+
+    const loading = document.createElement('h2');
+    loading.textContent = 'Generando PDF...';
+    loading.style.marginTop = '40px';
+    loading.style.fontFamily = 'Outfit, sans-serif';
+    loading.style.color = '#000';
+    wrapper.appendChild(loading);
+    wrapper.appendChild(printContainer);
+    document.body.appendChild(wrapper);
+    window.scrollTo(0, 0);
+
+    await new Promise(r => setTimeout(r, 800));
+
+    // Convert SVGs to images for PDF
+    const svgs = printContainer.querySelectorAll('svg');
+    await Promise.all(Array.from(svgs).map(svg => {
+        return new Promise(resolve => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 140;
+            canvas.height = 200;
+            if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svg.setAttribute('width', '70');
+            svg.setAttribute('height', '100');
+
+            const data = new XMLSerializer().serializeToString(svg);
+            const encoded = btoa(unescape(encodeURIComponent(data)));
+            const img = new Image();
+            img.onload = () => {
+                canvas.getContext('2d').drawImage(img, 0, 0, 140, 200);
+                const newImg = document.createElement('img');
+                newImg.src = canvas.toDataURL('image/png');
+                newImg.style.width = '100%';
+                newImg.style.height = '100%';
+                svg.parentNode.replaceChild(newImg, svg);
+                resolve();
+            };
+            img.onerror = () => resolve();
+            img.src = 'data:image/svg+xml;base64,' + encoded;
+        });
+    }));
+
+    try {
+        await html2pdf().set(opt).from(printContainer).save();
+    } catch (err) {
+        console.error('PDF error:', err);
+    } finally {
+        document.body.removeChild(wrapper);
+    }
+}
+
+function drawPDFDiagram(container, pos) {
+    const frets = pos.frets;
+    const fingers = pos.fingers;
+    const svgFingers = [];
+    let barreItems = [];
+
+    for (let i = 0; i < 6; i++) {
+        const fret = frets[i];
+        const stringNum = 6 - i;
+        let fingerText;
+        if (fingers?.length > i) {
+            const f = fingers[i];
+            if (f && f !== '0' && f !== 0 && f !== '-') fingerText = String(f);
+        }
+        let fp;
+        if (typeof fret === 'number') fp = fret === -1 ? 'x' : fret;
+        else if (typeof fret === 'string') fp = fret.toLowerCase() === 'x' ? 'x' : parseInt(fret, 16);
+        if (fp === 'x') svgFingers.push([stringNum, 'x']);
+        else if (fp === 0) svgFingers.push([stringNum, 0]);
+        else if (fp > 0) svgFingers.push(fingerText ? [stringNum, fp, fingerText] : [stringNum, fp]);
+    }
+    if (pos.barres?.length) {
+        pos.barres.forEach(f => barreItems.push({ fromString: 6, toString: 1, fret: f }));
+    }
+
+    const validFrets = pos.frets.filter(f => typeof f === 'number' && f > 0);
+    const minFret = validFrets.length > 0 ? Math.min(...validFrets) : 1;
+    const actualStartFret = pos.baseFret + minFret - 1;
+    const svgPos = actualStartFret >= 1 ? actualStartFret : 1;
+
+    try {
+        new svguitar.SVGuitarChord(container)
+            .configure({
+                color: '#000000',
+                frets: 5,
+                strings: 6,
+                fretSize: 1.5,
+                fretWidth: 1.5,
+                position: svgPos,
+                style: 'normal'
+            })
+            .chord({ fingers: svgFingers, barres: barreItems })
+            .draw();
+    } catch (err) {
+        console.warn('PDF diagram error', err);
+    }
 }
 
 // ─── Detail Modal ───
@@ -536,18 +749,48 @@ function playDetail(song) {
             if (session !== playbackSessionHub || !isDetailPlaying) return;
             const chord = song.chords[step];
             if (!chord) return;
-            const notes = chord.midiNotes?.filter(n => n > 0);
-            if (notes?.length) {
+
+            const measureSecs = (60 / bpm) * 4;
+            const playMode = song.play_mode || 'strum';
+            const strumPattern = song.strum_pattern || 'simple';
+            const pickingPattern = song.picking_pattern || 'arpegio_up';
+
+            if (playMode === 'picking') {
+                const pattern = PICKING_PATTERNS[pickingPattern] || PICKING_PATTERNS.arpegio_up;
+                const rawMidi = chord.dbData?.positions?.[0]?.midi || chord.midiNotes;
                 if (guitarSynth) {
-                    notes.forEach((midi, i) => {
-                        const vel = 0.4 + Math.random() * 0.35;
-                        const drift = Math.random() * 0.008 - 0.004;
-                        guitarSynth.play(Tone.Frequency(midi, 'midi').toNote(), time + i * 0.035 + drift, { duration: 1.2 + Math.random() * 0.6, gain: Math.max(vel, 0.2) });
-                    });
+                    fingerpickChordOn(guitarSynth, rawMidi, time, measureSecs, pattern, bpm);
                 } else {
-                    fallbackPlay(notes, time);
+                    const notes = chord.midiNotes?.filter(n => n > 0);
+                    if (notes?.length) fallbackPlayNotes(notes, time);
                 }
+            } else {
+                const pattern = STRUM_PATTERNS[strumPattern] || STRUM_PATTERNS.simple;
+                const strums = pattern.strums;
+                const strumCount = strums.length;
+                const beatPositions = strums.map(s => s.beat);
+                strums.forEach((strum, si) => {
+                    const grv = grooveOffset(strum.beat);
+                    const strumTime = time + strum.beat * measureSecs + grv;
+                    let dur;
+                    if (strum.mute) {
+                        dur = 0.04;
+                    } else if (strum.staccato) {
+                        dur = 0.12;
+                    } else {
+                        const nextBeat = si < strumCount - 1 ? beatPositions[si + 1] : 1.0;
+                        const gapSecs = (nextBeat - strum.beat) * measureSecs;
+                        dur = Math.max(gapSecs * 0.75, 0.12);
+                    }
+                    if (guitarSynth) {
+                        strumChordOn(guitarSynth, chord.midiNotes, strumTime, dur, { ...strum, beat: strum.beat });
+                    } else {
+                        const notes = chord.midiNotes?.filter(n => n > 0);
+                        if (notes?.length) fallbackPlayNotes(notes, time);
+                    }
+                });
             }
+
             step = (step + 1) % song.chords.length;
         }, '1n');
 

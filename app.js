@@ -1,51 +1,3 @@
-// ─── Strumming Patterns ───
-const STRUM_PATTERNS = {
-    simple:  { type: 'strum', label: 'Simple',  icon: '↓',     strums: [{ dir: 'down', beat: 0 }] },
-    dd:      { type: 'strum', label: 'A-A',     icon: '↓↓',    strums: [{ dir: 'down', beat: 0 }, { dir: 'down', beat: 0.5 }] },
-    du:      { type: 'strum', label: 'A-Ar',    icon: '↓↑',    strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.5 }] },
-    ddu:     { type: 'strum', label: 'A-A-Ar',  icon: '↓↓↑',   strums: [{ dir: 'down', beat: 0 }, { dir: 'down', beat: 0.5 }, { dir: 'up', beat: 0.75 }] },
-    folk:    { type: 'strum', label: 'Folk',    icon: '↓↓↑↑↓↑', strums: [
-        { dir: 'down', beat: 0 }, { dir: 'down', beat: 0.25 }, { dir: 'up', beat: 0.375 },
-        { dir: 'up', beat: 0.5 }, { dir: 'down', beat: 0.625 }, { dir: 'up', beat: 0.75 }
-    ]},
-    ballad:  { type: 'strum', label: 'Balada',  icon: '↓↑↓↑',  strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.25 }, { dir: 'down', beat: 0.5 }, { dir: 'up', beat: 0.75 }] },
-    reggae:  { type: 'strum', label: 'Reggae',  icon: '·↑·↑',  strums: [{ dir: 'down', beat: 0, mute: true }, { dir: 'up', beat: 0.25, staccato: true }, { dir: 'down', beat: 0.5, mute: true }, { dir: 'up', beat: 0.75, staccato: true }] },
-    waltz:   { type: 'strum', label: 'Vals',    icon: '↓↑↑',   strums: [{ dir: 'down', beat: 0 }, { dir: 'up', beat: 0.33 }, { dir: 'up', beat: 0.66 }] }
-};
-
-// ─── Fingerpicking Patterns ───
-const PICKING_PATTERNS = {
-    arpegio_up: {
-        type: 'picking', label: 'Arpeg. ↑', icon: '↗',
-        // Each note played individually, ascending strings
-        beats: [[0], [1], [2], [3], [4], [5]]
-    },
-    arpegio_down: {
-        type: 'picking', label: 'Arpeg. ↓', icon: '↙',
-        beats: [[5], [4], [3], [2], [1], [0]]
-    },
-    arpegio_fast: {
-        type: 'picking', label: 'Arpeg. Ráp.', icon: '⚡↗',
-        beats: [[0, 1], [2, 3], [4, 5]]
-    },
-    travis: {
-        type: 'picking', label: 'Travis', icon: 'B↓↑↓',
-        beats: [[0], [2, 3], [1], [4, 5]]
-    },
-    waltz_pick: {
-        type: 'picking', label: 'Vals Pun. ', icon: 'B··',
-        beats: [[0, 1], [2, 3], [4, 5]]
-    },
-    pinchado: {
-        type: 'picking', label: 'Pinchado', icon: 'B+↓',
-        beats: [[0, 4, 5], [1, 2, 3]]
-    },
-    folk_pick: {
-        type: 'picking', label: 'Folk Pun.', icon: 'B↗B↗',
-        beats: [[0], [2, 3], [1], [4, 5]]
-    }
-};
-
 const STORAGE_KEY = 'guitar-chord-studio-songs';
 const THEME_KEY = 'guitar-chord-studio-theme';
 
@@ -458,6 +410,7 @@ class ChordComposer {
 
         const block = this._createChordBlock(id, displayName, dbData, midiNotes, tonalParsingName);
         this.composerArea.appendChild(block);
+        this._renderLyricsChordChips();
         this._markDirty();
     }
 
@@ -580,6 +533,7 @@ class ChordComposer {
         if (this.sequence.length === 0) {
             this._showEmptyState();
         }
+        this._renderLyricsChordChips();
         this._markDirty();
     }
 
@@ -588,6 +542,7 @@ class ChordComposer {
         this._muteAudio();
         this.sequence = [];
         this._showEmptyState();
+        this._renderLyricsChordChips();
         this._markDirty();
     }
 
@@ -597,6 +552,38 @@ class ChordComposer {
                 <i class="fa-solid fa-music"></i>
                 <p>Agrega acordes desde la paleta para empezar a componer.</p>
             </div>`;
+    }
+
+    _renderLyricsChordChips() {
+        const container = document.getElementById('lyrics-chord-chips');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const seen = new Set();
+        this.sequence.forEach(c => {
+            if (!seen.has(c.displayName)) {
+                seen.add(c.displayName);
+                const chip = document.createElement('button');
+                chip.className = 'chord-chip';
+                chip.textContent = c.displayName;
+                chip.title = `Insertar [${c.displayName}]`;
+                chip.onclick = () => {
+                    const textarea = document.getElementById('song-lyrics');
+                    if (!textarea) return;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const text = textarea.value;
+                    const chordTag = `[${c.displayName}]`;
+                    textarea.value = text.slice(0, start) + chordTag + text.slice(end);
+                    const newPos = start + chordTag.length;
+                    textarea.selectionStart = newPos;
+                    textarea.selectionEnd = newPos;
+                    textarea.focus();
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                };
+                container.appendChild(chip);
+            }
+        });
     }
 
     // ─── Audio Playback ───
@@ -1123,6 +1110,7 @@ class ChordComposer {
             this._showEmptyState();
         }
 
+        this._renderLyricsChordChips();
         this._markClean();
         this.closeLibrary();
         this._feedback('¡Canción cargada!');

@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acorde Club — Presentación</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #070a13;
+            --panel-bg: rgba(15, 23, 42, 0.65);
+            --border-glow: rgba(56, 189, 248, 0.15);
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-rose: #f43f5e;
+            --accent-orange: #f97316;
+            --accent-green: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+        }
+
+        /* Slide layout container (for browser preview) */
+        .presentation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* Slide Dimensions: A4 Landscape Page */
+        .slide {
+            width: 297mm;
+            height: 210mm;
+            padding: 40px 50px;
+            background: radial-gradient(circle at 10% 20%, #111827 0%, #070a13 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Background Chilean Flag/Accent Details */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #0039a6 0%, #ffffff 50%, #d52b1e 100%);
+        }
+
+        /* Header styling */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 15px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-rose));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);
+        }
+
+        .logo-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide-tag {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        /* Content Area */
+        .slide-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            padding: 20px 0;
+            min-height: 0; /* allows flex children to shrink */
+        }
+
+        .slide-left {
+            flex: 1.1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .slide-right {
+            flex: 0.9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Typography */
+        h2.slide-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.slide-lead {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-weight: 300;
+        }
+
+        .bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .bullet-item {
+            display: flex;
+            gap: 12px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #e2e8f0;
+        }
+
+        .bullet-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            font-size: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .bullet-item strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Mockup Frame for Screenshots */
+        .mockup-frame {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px var(--border-glow);
+            width: 100%;
+            max-height: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mockup-img {
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            display: block;
+            object-fit: contain;
+        }
+
+        /* Grid Layout Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+
+        .grid-card {
+            background: rgba(30, 41, 59, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card-header-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .icon-blue {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .icon-rose {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--accent-rose);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+
+        .icon-orange {
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--accent-orange);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Footer styling */
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 15px;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-dot {
+            width: 4px;
+            height: 4px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+
+        .slide-number {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        /* Cover Slide Specific Styles */
+        .slide-cover {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #070a13 100%);
+        }
+
+        .cover-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            max-width: 800px;
+            margin: auto 0;
+        }
+
+        .cover-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 6px 16px;
+            border-radius: 30px;
+            margin-bottom: 5px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.1);
+        }
+
+        .cover-title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cover-subtitle {
+            font-size: 1.4rem;
+            color: #94a3b8;
+            font-weight: 300;
+            line-height: 1.4;
+        }
+
+        .cover-origin {
+            font-size: 0.95rem;
+            color: var(--accent-orange);
+            font-weight: 600;
+            background: rgba(249, 115, 22, 0.08);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        /* ═══ PRINT STYLES ═══ */
+        @media print {
+            body {
+                background-color: #ffffff;
+            }
+            .presentation-container {
+                padding: 0;
+                gap: 0;
+            }
+            .slide {
+                width: 297mm;
+                height: 210mm;
+                page-break-after: always;
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+                /* Force background colors and gradients in PDF */
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+
+        <!-- ════ Slide 1: Cover ════ -->
+        <div class="slide slide-cover">
+            <div class="cover-content">
+                <span class="cover-badge"><i class="fa-solid fa-guitar"></i> Acorde Club</span>
+                <h1 class="cover-title">La Música al Alcance de Todos</h1>
+                <p class="cover-subtitle">Democratizando la creación y expresión musical en cada rincón de Chile, sin importar los conocimientos técnicos previos.</p>
+                <span class="cover-origin"><i class="fa-solid fa-location-dot"></i> Creado en Tarapacá para unir a todo el país</span>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">01</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 2: El Desafío ════ -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="logo-area">
+                    <div class="logo-icon"><i class="fa-solid fa-guitar"></i></div>
+                    <span class="logo-title">Acorde Club</span>
+                </div>
+                <span class="slide-tag">El Desafío</span>
+            </div>
+            <div class="slide-content">
+                <div class="slide-left">
+                    <h2 class="slide-title">¿Por qué es difícil hacer música?</h2>
+                    <p class="slide-lead">La teoría tradicional y el aprendizaje técnico actúan como barreras de exclusión para miles de personas con inquietudes artísticas.</p>
+                    <ul class="bullet-list">
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <div><strong>Barrera teórica compleja:</strong> La lectura de partituras y las reglas de armonía ahuyentan a los aficionados e impiden la expresión inmediata.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div><strong>Lento progreso inicial:</strong> Aprender la posición física de los acordes en guitarra genera frustración y deserción en las primeras semanas.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-user-slash"></i></div>
+                            <div><strong>Aislamiento creativo:</strong> Los creadores novatos no cuentan con plataformas accesibles para compartir y validar sus composiciones con otros chilenos.</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="slide-right" style="flex: 0.9;">
+                    <div class="card-grid" style="grid-template-columns: 1fr; gap: 15px; width: 85%;">
+                        <div class="grid-card" style="padding: 20px; background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.15);">
+                            <div class="card-header-icon icon-rose" style="width: 36px; height: 36px; font-size: 1rem;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <h3 class="card-title" style="font-size: 1rem;">El problema social</h3>
+                            <p class="card-desc" style="font-size: 0.8rem;">La música se ve comúnmente como un privilegio de expertos o personas con educación musical formal, marginando el talento natural en comunidades populares.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">02</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 3: La Solución ════ -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="logo-area">
+                    <div class="logo-icon"><i class="fa-solid fa-guitar"></i></div>
+                    <span class="logo-title">Acorde Club</span>
+                </div>
+                <span class="slide-tag">La Solución</span>
+            </div>
+            <div class="slide-content">
+                <div class="slide-left">
+                    <h2 class="slide-title">Un lienzo musical visual</h2>
+                    <p class="slide-lead">Acorde Club es una plataforma web interactiva y gratuita que elimina las trabas técnicas para que cualquier persona pueda componer canciones.</p>
+                    <ul class="bullet-list">
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <div><strong>Arrastra y compone:</strong> Selección intuitiva de acordes con un clic, estructurando ritmos de forma completamente gráfica.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-eye"></i></div>
+                            <div><strong>Guía visual de guitarra:</strong> Cada acorde muestra automáticamente el diagrama de cuerdas y trastes, ideal para principiantes.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-volume-high"></i></div>
+                            <div><strong>Motor de reproducción realista:</strong> Escucha los rasgueos de guitarra acústica al instante, facilitando cantar encima y seguir el compás.</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="slide-right" style="flex: 0.9;">
+                    <div class="card-grid" style="grid-template-columns: 1fr; gap: 15px; width: 85%;">
+                        <div class="grid-card" style="padding: 20px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15);">
+                            <div class="card-header-icon icon-blue" style="width: 36px; height: 36px; font-size: 1rem; background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2);"><i class="fa-solid fa-lightbulb"></i></div>
+                            <h3 class="card-title" style="font-size: 1rem; color: #ffffff;">Accesibilidad total</h3>
+                            <p class="card-desc" style="font-size: 0.8rem;">No necesitas saber afinar, leer tablaturas ni tener experiencia. Solo necesitas tus ganas de contar una historia y el software te acompañará en el camino.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">03</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 4: Composer Editor ════ -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="logo-area">
+                    <div class="logo-icon"><i class="fa-solid fa-guitar"></i></div>
+                    <span class="logo-title">Acorde Club</span>
+                </div>
+                <span class="slide-tag">El Editor</span>
+            </div>
+            <div class="slide-content">
+                <div class="slide-left" style="flex: 1.0;">
+                    <h2 class="slide-title">Diseña tus canciones con un clic</h2>
+                    <p class="slide-lead">El espacio de composición está diseñado para guiar y motivar paso a paso al creador novel.</p>
+                    <ul class="bullet-list">
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-shapes"></i></div>
+                            <div><strong>Paleta Esencial:</strong> Acceso rápido a los acordes más populares de la música chilena e hispanoamericana.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-hand"></i></div>
+                            <div><strong>Patrones de Rasgueo:</strong> Elige entre estilos como Folk, Balada, Reggae o Vals para cambiar el ritmo de la canción al instante.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-palette"></i></div>
+                            <div><strong>Diseño Premium y Personalizable:</strong> Diferentes ambientes y colores (Naturaleza, Bliss, Océano, Playa) para inspirar la composición.</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="slide-right" style="flex: 1.0;">
+                    <div class="mockup-frame">
+                        <img src="screenshots/editor.png" alt="Captura del Editor" class="mockup-img">
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">04</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 5: Letra y Acordes ════ -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="logo-area">
+                    <div class="logo-icon"><i class="fa-solid fa-guitar"></i></div>
+                    <span class="logo-title">Acorde Club</span>
+                </div>
+                <span class="slide-tag">Cancioneros</span>
+            </div>
+            <div class="slide-content">
+                <div class="slide-left" style="flex: 1.0;">
+                    <h2 class="slide-title">Escribe la letra y genera diagramas</h2>
+                    <p class="slide-lead">Unir palabras y acordes es tan fácil como escribir un texto común.</p>
+                    <ul class="bullet-list">
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-align-left"></i></div>
+                            <div><strong>Formato Simple:</strong> Coloca los acordes entre corchetes, como <code>[Am]</code> o <code>[G]</code>, sobre las palabras exactas donde deben sonar.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                            <div><strong>Cancionero Imprimible:</strong> Exporta tu canción terminada en formato PDF con la letra alineada y la guía visual de los acordes al pie de página.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+                            <div><strong>Ideal para Compartir:</strong> Perfecto para reuniones, talleres educativos o para llevar a una salida al aire libre.</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="slide-right" style="flex: 1.0;">
+                    <div class="mockup-frame">
+                        <img src="screenshots/detail.png" alt="Captura de Detalles y Letras" class="mockup-img">
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">05</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 6: El Hub ════ -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="logo-area">
+                    <div class="logo-icon"><i class="fa-solid fa-guitar"></i></div>
+                    <span class="logo-title">Acorde Club</span>
+                </div>
+                <span class="slide-tag">Comunidad</span>
+            </div>
+            <div class="slide-content">
+                <div class="slide-left" style="flex: 1.0;">
+                    <h2 class="slide-title">Uniendo voces a lo largo de Chile</h2>
+                    <p class="slide-lead">La comunidad web de Acorde Club permite a personas de distintas regiones compartir su arte, conectando a través de la música.</p>
+                    <ul class="bullet-list">
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-cloud"></i></div>
+                            <div><strong>Biblioteca Común:</strong> Al guardar una canción en el editor, esta se sube de forma instantánea al Hub público.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-search"></i></div>
+                            <div><strong>Buscador Integrado:</strong> Explora canciones de otros usuarios por título, artista o género para aprender ritmos nuevos.</div>
+                        </li>
+                        <li class="bullet-item">
+                            <div class="bullet-icon"><i class="fa-solid fa-share-nodes"></i></div>
+                            <div><strong>Colaboración Nacional:</strong> Cualquier chileno interesado puede descargar la estructura de la canción de otro para tocarla o modificarla en su propio editor.</div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="slide-right" style="flex: 1.0;">
+                    <div class="mockup-frame">
+                        <img src="screenshots/hub.png" alt="Captura del Hub de Comunidad" class="mockup-img">
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">06</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 7: Impacto Tarapacá y Chile ════ -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="logo-area">
+                    <div class="logo-icon"><i class="fa-solid fa-guitar"></i></div>
+                    <span class="logo-title">Acorde Club</span>
+                </div>
+                <span class="slide-tag">Impacto y Futuro</span>
+            </div>
+            <div class="slide-content" style="flex-direction: column; justify-content: center; gap: 25px;">
+                <div style="text-align: center; max-width: 800px; margin: 0 auto 10px auto;">
+                    <h2 class="slide-title" style="font-size: 2rem; background: linear-gradient(135deg, #ffffff, var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Nuestra Propuesta de Impacto Cultural</h2>
+                    <p class="slide-lead" style="font-size: 0.95rem;">Uniendo a comunidades y promoviendo la identidad local desde Tarapacá hacia todo el territorio chileno.</p>
+                </div>
+                <div class="card-grid">
+                    <div class="grid-card">
+                        <div class="card-header-icon icon-blue"><i class="fa-solid fa-graduation-cap"></i></div>
+                        <h3 class="card-title">Talleres Comunitarios</h3>
+                        <p class="card-desc">Clases y encuentros vecinales en colegios, bibliotecas y centros sociales de Tarapacá para que jóvenes y adultos mayores compongan su primera canción en una sola sesión.</p>
+                    </div>
+                    <div class="grid-card">
+                        <div class="card-header-icon icon-rose"><i class="fa-solid fa-bookmark"></i></div>
+                        <h3 class="card-title">Rescate del Folclore</h3>
+                        <p class="card-desc">Digitalizar cantos populares, cuecas y canciones tradicionales del norte y sur de Chile para preservarlos y hacerlos disponibles para principiantes de guitarra.</p>
+                    </div>
+                    <div class="grid-card">
+                        <div class="card-header-icon icon-orange"><i class="fa-solid fa-handshake"></i></div>
+                        <h3 class="card-title">Red de Cooperación</h3>
+                        <p class="card-desc">Conectar a instructores locales y guitarristas con jóvenes talentos de escasos recursos o sin acceso a instrumentos físicos para brindar mentorías colaborativas.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">07</span>
+            </div>
+        </div>
+
+        <!-- ════ Slide 8: Cierre ════ -->
+        <div class="slide slide-cover" style="background: radial-gradient(circle at 50% 50%, #0d1b2a 0%, #070a13 100%);">
+            <div class="cover-content" style="gap: 15px;">
+                <span class="cover-badge" style="color: var(--accent-orange); background: rgba(249, 115, 22, 0.08); border: 1px solid rgba(249, 115, 22, 0.2);"><i class="fa-solid fa-heart"></i> El Futuro se Compone Juntos</span>
+                <h1 class="cover-title" style="font-size: 3.5rem;">¿Nos unimos para hacer sonar a Chile?</h1>
+                <p class="cover-subtitle" style="font-size: 1.2rem; max-width: 700px;">Buscamos el apoyo de Cultura Tarapacá para expandir la plataforma, realizar los primeros talleres comunitarios y crear un cancionero digital popular.</p>
+                <div style="margin-top: 25px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px; text-align: center;">
+                    <p style="font-size: 1rem; color: #ffffff; font-weight: 600; margin-bottom: 5px;">Iniciativa de Joaquín Alejandro Osses Olmedo</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Proyecto tecnológico-cultural para la democratización artística</p>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <div class="footer-left">
+                    <span>Propuesta de Innovación Social y Musical</span>
+                    <span class="footer-dot"></span>
+                    <span>Acorde Club</span>
+                </div>
+                <span class="slide-number">08</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

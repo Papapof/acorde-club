@@ -227,9 +227,12 @@
             <!-- ═══ LYRICS ═══ -->
             <section class="lyrics-panel">
                 <h3><i class="fa-solid fa-align-left"></i> Letra</h3>
-                <textarea id="song-lyrics"
-                    placeholder="Escribe la letra aquí...&#10;&#10;Usa corchetes para los acordes sobre las palabras:&#10;[Am] Estoy muy solo y triste&#10;[F#] acá en este mundo abandonado"
-                    class="form-control lyrics-input"></textarea>
+                <div class="lyrics-panel-body">
+                    <div class="lyrics-chord-chips" id="lyrics-chord-chips"></div>
+                    <textarea id="song-lyrics"
+                        placeholder="Escribe la letra aquí...&#10;&#10;Usa corchetes para los acordes sobre las palabras:&#10;[Am] Estoy muy solo y triste&#10;[F#] acá en este mundo abandonado"
+                        class="form-control lyrics-input"></textarea>
+                </div>
             </section>
 
             <footer class="app-footer">
@@ -241,6 +244,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
     <script src="supabase-config.js"></script>
+    <script src="audio-engine.js"></script>
     <script src="app.js?v=12"></script>
 </body>
 </html>

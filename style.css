@@ -640,8 +640,50 @@ h1 {
     color: var(--text-secondary);
 }
 
+.lyrics-panel-body {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+.lyrics-chord-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    padding-top: 0.15rem;
+}
+
+.chord-chip {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: center;
+    font-family: var(--font-family);
+    min-width: 42px;
+    line-height: 1;
+}
+
+.chord-chip:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(128, 128, 128, 0.2);
+}
+
+.chord-chip:active {
+    transform: translateY(0);
+}
+
 .lyrics-input {
-    width: 100%;
+    flex: 1;
     min-height: 180px;
     padding: 1rem;
     background: var(--input-bg);
